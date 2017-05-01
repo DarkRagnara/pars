@@ -275,3 +275,28 @@ func (s *String) Unread(src *reader) {
 func (s *String) Clone() Parser {
 	return NewString(s.expected)
 }
+
+type eof struct{}
+
+//EOF is a parser that never yields a value but that succeeds if and only if the source reached EOF
+var EOF Parser = eof{}
+
+func (e eof) Parse(src *reader) (interface{}, error) {
+	buf := [1]byte{}
+	n, err := src.Read(buf[:])
+	if err == io.EOF {
+		return nil, nil
+	}
+	if n != 0 {
+		err = fmt.Errorf("Found byte 0x%x", buf[0])
+		src.Unread(buf[:])
+	}
+	return nil, fmt.Errorf("Expected EOF: %v", err)
+}
+
+func (e eof) Unread(src *reader) {
+}
+
+func (e eof) Clone() Parser {
+	return e
+}

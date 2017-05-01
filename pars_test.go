@@ -332,3 +332,19 @@ func BenchmarkParseStringString(b *testing.B) {
 		helloParser.Parse(r)
 	}
 }
+
+func TestParseEOF(t *testing.T) {
+	r := stringReader("a")
+
+	val1, err1 := EOF.Parse(r)
+	assertParse(t, val1, err1, nil, fmt.Errorf("Expected EOF: Found byte 0x61"))
+
+	aVal, aErr := NewChar('a').Parse(r)
+	assertParse(t, aVal, aErr, 'a', nil)
+
+	val2, err2 := EOF.Parse(r)
+	assertParse(t, val2, err2, nil, nil)
+
+	assertBytes(t, r.buf.current, []byte{})
+	assertBytes(t, r.buf.prepend, []byte{})
+}
