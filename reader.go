@@ -5,50 +5,39 @@ import (
 )
 
 type Reader struct {
-	r       io.Reader
-	buf     []byte
-	l       int
-	lastErr error
+	r          io.Reader
+	buf        buffer
+	bufBackend []byte
+	lastErr    error
 }
 
 func NewReader(r io.Reader) *Reader {
-	return &Reader{r: r, buf: make([]byte, 256)}
+	bufBackend := make([]byte, 256)
+	return &Reader{r: r, bufBackend: bufBackend, buf: buffer{current: bufBackend[0:0]}}
 }
 
 var _ io.Reader = &Reader{}
 
 func (br *Reader) Read(p []byte) (n int, err error) {
-	if br.l == 0 && br.lastErr == io.EOF {
+	if br.buf.IsEmpty() && br.lastErr == io.EOF {
 		return 0, io.EOF
 	}
 
-	if br.l >= len(p) {
-		br.readFromBuf(p)
-		return len(p), nil
+	n, err = br.buf.Read(p)
+	if n == len(p) {
+		return
 	}
 
-	read := br.l
-	rest := len(p) - read
-	copy(p, br.buf[:])
+	p = p[n:]
 
-	nFromBuffer, err := br.r.Read(br.buf)
-	br.l = nFromBuffer
-	br.lastErr = err
+	m, lastErr := br.r.Read(br.bufBackend)
+	br.lastErr = lastErr
+	br.buf.current = br.bufBackend[:m]
 
-	if nFromBuffer >= rest {
-		br.readFromBuf(p[read:])
-		return len(p), nil
-	}
-
-	copy(p[read:], br.buf[:])
-	read += br.l
-	br.buf = br.buf[:0]
-	br.l = 0
-	return read, err
+	n2, err := br.buf.Read(p)
+	return n + n2, err
 }
 
-func (br *Reader) readFromBuf(p []byte) {
-	copy(p, br.buf[:len(p)])
-	br.buf = br.buf[len(p):]
-	br.l -= len(p)
+func (br *Reader) Unread(p []byte) {
+	br.buf.Unread(p)
 }
