@@ -45,7 +45,7 @@ func assertParse(t *testing.T, val interface{}, err error, expectedVal interface
 		t.Errorf("Expected %v (%T), but got %v (%T)", expectedVal, expectedVal, val, val)
 	}
 
-	if err != expectedErr && err.Error() != expectedErr.Error() {
+	if err != expectedErr && (err == nil || expectedErr == nil || err.Error() != expectedErr.Error()) {
 		t.Errorf("Expected error '%v' (%T), but got '%v' (%T)", expectedErr, expectedErr, err, err)
 	}
 }

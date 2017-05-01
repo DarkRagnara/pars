@@ -112,18 +112,48 @@ var _ Parser = &Char{}
 func (c *Char) Parse(src *Reader) (interface{}, error) {
 	val, err := c.AnyRune.Parse(src)
 	if err != nil {
-		return nil, fmt.Errorf("Could not parse expected rune '%v': %v", c.expected, err.Error())
+		return nil, fmt.Errorf("Could not parse expected rune '%c' (0x%x): %v", c.expected, c.expected, err.Error())
 	}
 	if val, ok := val.(rune); ok {
 		if val == c.expected {
 			return val, nil
 		}
 		c.AnyRune.Unread(src)
-		return nil, fmt.Errorf("Could not parse expected rune '%v': Unexpected rune '%v'", c.expected, val)
+		return nil, fmt.Errorf("Could not parse expected rune '%c' (0x%x): Unexpected rune '%c' (0x%x)", c.expected, c.expected, val, val)
 	}
 	panic("AnyRune returned type != rune")
 }
 
 func (c *Char) Clone() Parser {
 	return NewChar(c.expected)
+}
+
+type CharPred struct {
+	pred func(rune) bool
+	AnyRune
+}
+
+func NewCharPred(pred func(rune) bool) *CharPred {
+	return &CharPred{pred: pred}
+}
+
+var _ Parser = &CharPred{}
+
+func (c *CharPred) Parse(src *Reader) (interface{}, error) {
+	val, err := c.AnyRune.Parse(src)
+	if err != nil {
+		return nil, fmt.Errorf("Could not parse expected rune: %v", err.Error())
+	}
+	if val, ok := val.(rune); ok {
+		if c.pred(val) {
+			return val, nil
+		}
+		c.AnyRune.Unread(src)
+		return nil, fmt.Errorf("Could not parse expected rune: Rune '%c' (0x%x) does not hold predicate", val, val)
+	}
+	panic("AnyRune returned type != rune")
+}
+
+func (c *CharPred) Clone() Parser {
+	return NewCharPred(c.pred)
 }

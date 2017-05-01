@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"testing"
+	"unicode"
 )
 
 func TestParseRune(t *testing.T) {
@@ -108,7 +109,7 @@ func TestParseExpectedChars(t *testing.T) {
 
 	parserEOF := aParser.Clone()
 	valEOF, errEOF := parserEOF.Parse(r)
-	assertParse(t, valEOF, errEOF, nil, fmt.Errorf("Could not parse expected rune '97': EOF"))
+	assertParse(t, valEOF, errEOF, nil, fmt.Errorf("Could not parse expected rune 'a' (0x61): EOF"))
 
 	assertBytes(t, r.buf.current, []byte{})
 	assertBytes(t, r.buf.prepend, []byte{})
@@ -117,9 +118,9 @@ func TestParseExpectedChars(t *testing.T) {
 func TestParseUnexpectedChars(t *testing.T) {
 	r := StringReader("a")
 
-	bParser := NewChar('b')
+	bParser := NewChar('€')
 	bVal, bErr := bParser.Parse(r)
-	assertParse(t, bVal, bErr, nil, fmt.Errorf("Could not parse expected rune '98': Unexpected rune '97'"))
+	assertParse(t, bVal, bErr, nil, fmt.Errorf("Could not parse expected rune '€' (0x20ac): Unexpected rune 'a' (0x61)"))
 
 	assertBytes(t, r.buf.current, []byte{})
 	assertBytes(t, r.buf.prepend, []byte{97})
@@ -130,7 +131,48 @@ func TestParseUnexpectedChars(t *testing.T) {
 
 	parserEOF := aParser.Clone()
 	valEOF, errEOF := parserEOF.Parse(r)
-	assertParse(t, valEOF, errEOF, nil, fmt.Errorf("Could not parse expected rune '97': EOF"))
+	assertParse(t, valEOF, errEOF, nil, fmt.Errorf("Could not parse expected rune 'a' (0x61): EOF"))
+
+	assertBytes(t, r.buf.current, []byte{})
+	assertBytes(t, r.buf.prepend, []byte{})
+}
+
+func TestParseExpectedCharPred(t *testing.T) {
+	r := StringReader(" \t")
+
+	spaceParser := NewCharPred(unicode.IsSpace)
+	spaceVal, spaceErr := spaceParser.Parse(r)
+	assertParse(t, spaceVal.(rune), spaceErr, ' ', nil)
+
+	tabParser := spaceParser.Clone()
+	tabVal, tabErr := tabParser.Parse(r)
+	assertParse(t, tabVal.(rune), tabErr, '\t', nil)
+
+	parserEOF := spaceParser.Clone()
+	valEOF, errEOF := parserEOF.Parse(r)
+	assertParse(t, valEOF, errEOF, nil, fmt.Errorf("Could not parse expected rune: EOF"))
+
+	assertBytes(t, r.buf.current, []byte{})
+	assertBytes(t, r.buf.prepend, []byte{})
+}
+
+func TestParseUnexpectedCharPred(t *testing.T) {
+	r := StringReader("a")
+
+	spaceParser := NewCharPred(unicode.IsSpace)
+	spaceVal, spaceErr := spaceParser.Parse(r)
+	assertParse(t, spaceVal, spaceErr, nil, fmt.Errorf("Could not parse expected rune: Rune 'a' (0x61) does not hold predicate"))
+
+	assertBytes(t, r.buf.current, []byte{})
+	assertBytes(t, r.buf.prepend, []byte{97})
+
+	aParser := NewCharPred(unicode.IsLetter)
+	aVal, aErr := aParser.Parse(r)
+	assertParse(t, aVal.(rune), aErr, 'a', nil)
+
+	parserEOF := aParser.Clone()
+	valEOF, errEOF := parserEOF.Parse(r)
+	assertParse(t, valEOF, errEOF, nil, fmt.Errorf("Could not parse expected rune: EOF"))
 
 	assertBytes(t, r.buf.current, []byte{})
 	assertBytes(t, r.buf.prepend, []byte{})
