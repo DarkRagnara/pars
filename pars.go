@@ -1,7 +1,7 @@
 package pars
 
 import (
-	"errors"
+	"fmt"
 	"strings"
 	"unicode/utf8"
 )
@@ -24,7 +24,7 @@ type AnyRune struct {
 
 var _ Parser = &AnyRune{}
 
-var ErrRuneExpected = errors.New("Expected rune")
+var ErrRuneExpected = fmt.Errorf("Expected rune")
 
 //Parse tries to read a single rune or fails.
 func (r *AnyRune) Parse(src *Reader) (interface{}, error) {
@@ -96,4 +96,34 @@ func (b *AnyByte) Unread(src *Reader) {
 
 func (b *AnyByte) Clone() Parser {
 	return &AnyByte{}
+}
+
+type Char struct {
+	expected rune
+	AnyRune
+}
+
+func NewChar(r rune) *Char {
+	return &Char{expected: r}
+}
+
+var _ Parser = &Char{}
+
+func (c *Char) Parse(src *Reader) (interface{}, error) {
+	val, err := c.AnyRune.Parse(src)
+	if err != nil {
+		return nil, fmt.Errorf("Could not parse expected rune '%v': %v", c.expected, err.Error())
+	}
+	if val, ok := val.(rune); ok {
+		if val == c.expected {
+			return val, nil
+		}
+		c.AnyRune.Unread(src)
+		return nil, fmt.Errorf("Could not parse expected rune '%v': Unexpected rune '%v'", c.expected, val)
+	}
+	panic("AnyRune returned type != rune")
+}
+
+func (c *Char) Clone() Parser {
+	return NewChar(c.expected)
 }

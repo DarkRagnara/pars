@@ -1,6 +1,7 @@
 package pars
 
 import (
+	"fmt"
 	"io"
 	"testing"
 )
@@ -85,6 +86,51 @@ func TestParseByte(t *testing.T) {
 	parserEOF := AnyByte{}
 	valEOF, errEOF := parserEOF.Parse(r)
 	assertParse(t, valEOF, errEOF, nil, io.EOF)
+
+	assertBytes(t, r.buf.current, []byte{})
+	assertBytes(t, r.buf.prepend, []byte{})
+}
+
+func TestParseExpectedChars(t *testing.T) {
+	r := StringReader("aba")
+
+	aParser := NewChar('a')
+	aVal, aErr := aParser.Parse(r)
+	assertParse(t, aVal.(rune), aErr, 'a', nil)
+
+	bParser := NewChar('b')
+	bVal, bErr := bParser.Parse(r)
+	assertParse(t, bVal.(rune), bErr, 'b', nil)
+
+	aParser2 := aParser.Clone()
+	aVal2, aErr2 := aParser2.Parse(r)
+	assertParse(t, aVal2.(rune), aErr2, 'a', nil)
+
+	parserEOF := aParser.Clone()
+	valEOF, errEOF := parserEOF.Parse(r)
+	assertParse(t, valEOF, errEOF, nil, fmt.Errorf("Could not parse expected rune '97': EOF"))
+
+	assertBytes(t, r.buf.current, []byte{})
+	assertBytes(t, r.buf.prepend, []byte{})
+}
+
+func TestParseUnexpectedChars(t *testing.T) {
+	r := StringReader("a")
+
+	bParser := NewChar('b')
+	bVal, bErr := bParser.Parse(r)
+	assertParse(t, bVal, bErr, nil, fmt.Errorf("Could not parse expected rune '98': Unexpected rune '97'"))
+
+	assertBytes(t, r.buf.current, []byte{})
+	assertBytes(t, r.buf.prepend, []byte{97})
+
+	aParser := NewChar('a')
+	aVal, aErr := aParser.Parse(r)
+	assertParse(t, aVal.(rune), aErr, 'a', nil)
+
+	parserEOF := aParser.Clone()
+	valEOF, errEOF := parserEOF.Parse(r)
+	assertParse(t, valEOF, errEOF, nil, fmt.Errorf("Could not parse expected rune '97': EOF"))
 
 	assertBytes(t, r.buf.current, []byte{})
 	assertBytes(t, r.buf.prepend, []byte{})
