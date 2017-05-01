@@ -46,6 +46,24 @@ func assertParse(t *testing.T, val interface{}, err error, expectedVal interface
 	}
 
 	if err != expectedErr && (err == nil || expectedErr == nil || err.Error() != expectedErr.Error()) {
-		t.Errorf("Expected error '%v' (%T), but got '%v' (%T)", expectedErr, expectedErr, err, err)
+		t.Errorf("\nExpected error '%v' (%T),\n"+
+			"       but got '%v' (%T)", expectedErr, expectedErr, err, err)
+	}
+}
+
+func assertRunesInSlice(t *testing.T, vals []interface{}, expected string) {
+	for i, val := range vals {
+		if i >= len(expected) {
+			t.Errorf("More values (%v) found than expected (%v)", len(vals), len(expected))
+			return
+		}
+		expRune := []rune(expected)[i]
+		if r, ok := val.(rune); ok {
+			if r != expRune {
+				t.Errorf("Expected rune '%c' at index '%v', got '%c'", expRune, i, r)
+			}
+		} else {
+			t.Errorf("Expected rune '%c' at index '%v', got '%v' (%T)", expRune, i, val, val)
+		}
 	}
 }

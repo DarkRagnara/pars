@@ -177,3 +177,47 @@ func TestParseUnexpectedCharPred(t *testing.T) {
 	assertBytes(t, r.buf.current, []byte{})
 	assertBytes(t, r.buf.prepend, []byte{})
 }
+
+func TestParseSeq(t *testing.T) {
+	r := StringReader("a€ca€c")
+
+	seqParser := NewSeq(NewChar('a'), NewChar('€'), NewChar('c'))
+	seqVal, seqErr := seqParser.Parse(r)
+	assertParse(t, nil, seqErr, nil, nil)
+	assertRunesInSlice(t, seqVal.([]interface{}), "a€c")
+
+	seqParser2 := seqParser.Clone()
+	seqVal2, seqErr2 := seqParser2.Parse(r)
+	assertParse(t, nil, seqErr2, nil, nil)
+	assertRunesInSlice(t, seqVal2.([]interface{}), "a€c")
+
+	parserEOF := seqParser.Clone()
+	valEOF, errEOF := parserEOF.Parse(r)
+	assertParse(t, valEOF, errEOF, nil, fmt.Errorf("Could not find expected sequence item 0: Could not parse expected rune 'a' (0x61): EOF"))
+
+	assertBytes(t, r.buf.current, []byte{})
+	assertBytes(t, r.buf.prepend, []byte{})
+}
+
+func TestParseSeqFailed(t *testing.T) {
+	r := StringReader("a€d")
+
+	seqParser := NewSeq(NewChar('a'), NewChar('€'), NewChar('c'))
+	seqVal, seqErr := seqParser.Parse(r)
+	assertParse(t, seqVal, seqErr, nil, fmt.Errorf("Could not find expected sequence item 2: Could not parse expected rune 'c' (0x63): Unexpected rune 'd' (0x64)"))
+
+	assertBytes(t, r.buf.current, []byte{})
+	assertBytes(t, r.buf.prepend, []byte{0x64, 0xac, 0x82, 0xe2, 0x61})
+
+	seqParser2 := NewSeq(NewChar('a'), NewChar('€'), NewChar('d'))
+	seqVal2, seqErr2 := seqParser2.Parse(r)
+	assertParse(t, nil, seqErr2, nil, nil)
+	assertRunesInSlice(t, seqVal2.([]interface{}), "a€d")
+
+	parserEOF := seqParser.Clone()
+	valEOF, errEOF := parserEOF.Parse(r)
+	assertParse(t, valEOF, errEOF, nil, fmt.Errorf("Could not find expected sequence item 0: Could not parse expected rune 'a' (0x61): EOF"))
+
+	assertBytes(t, r.buf.current, []byte{})
+	assertBytes(t, r.buf.prepend, []byte{})
+}

@@ -103,7 +103,7 @@ type Char struct {
 	AnyRune
 }
 
-func NewChar(r rune) *Char {
+func NewChar(r rune) Parser {
 	return &Char{expected: r}
 }
 
@@ -133,7 +133,7 @@ type CharPred struct {
 	AnyRune
 }
 
-func NewCharPred(pred func(rune) bool) *CharPred {
+func NewCharPred(pred func(rune) bool) Parser {
 	return &CharPred{pred: pred}
 }
 
@@ -156,4 +156,44 @@ func (c *CharPred) Parse(src *Reader) (interface{}, error) {
 
 func (c *CharPred) Clone() Parser {
 	return NewCharPred(c.pred)
+}
+
+//Seq is a parser that matches all of its given parsers in order or none of them.
+type Seq struct {
+	parsers []Parser
+}
+
+var _ Parser = &Seq{}
+
+func NewSeq(parsers ...Parser) Parser {
+	return &Seq{parsers: parsers}
+}
+
+func (s *Seq) Parse(src *Reader) (interface{}, error) {
+	values := make([]interface{}, len(s.parsers))
+	for i, parser := range s.parsers {
+		val, err := parser.Parse(src)
+		if err != nil {
+			for j := i - 1; j >= 0; j-- {
+				s.parsers[j].Unread(src)
+			}
+			return nil, fmt.Errorf("Could not find expected sequence item %v: %v", i, err)
+		}
+		values[i] = val
+	}
+	return values, nil
+}
+
+func (s *Seq) Unread(src *Reader) {
+	for i := len(s.parsers) - 1; i >= 0; i-- {
+		s.parsers[i].Unread(src)
+	}
+}
+
+func (s *Seq) Clone() Parser {
+	s2 := &Seq{parsers: make([]Parser, len(s.parsers))}
+	for i, parser := range s.parsers {
+		s2.parsers[i] = parser.Clone()
+	}
+	return s2
 }

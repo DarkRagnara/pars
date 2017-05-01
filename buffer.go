@@ -17,8 +17,8 @@ func (b *buffer) Read(p []byte) (n int, err error) {
 		last := len(b.prepend) - 1
 		p[i] = b.prepend[last]
 		b.prepend = b.prepend[:last]
+		n++
 	}
-	n = initialPrependLen
 	if initialPrependLen >= len(p) {
 		return
 	}

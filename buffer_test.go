@@ -26,6 +26,18 @@ func TestReadFromPrepend(t *testing.T) {
 	read123(t, b)
 }
 
+func TestReadNotEverythingFromPrepend(t *testing.T) {
+	b := buffer{}
+	b.Unread([]byte{1, 2, 3})
+	assertBufferLen(t, b, 3)
+
+	buf := make([]byte, 2)
+	n, err := b.Read(buf)
+	assertRead(t, n, err, 2, nil)
+	assertBytes(t, buf, []byte{1, 2})
+	assertBytes(t, b.prepend, []byte{3})
+}
+
 func TestReadFromBoth(t *testing.T) {
 	b := buffer{current: []byte{3}}
 	b.Unread([]byte{1, 2})
