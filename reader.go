@@ -4,21 +4,21 @@ import (
 	"io"
 )
 
-type Reader struct {
+type reader struct {
 	r          io.Reader
 	buf        buffer
 	bufBackend []byte
 	lastErr    error
 }
 
-func NewReader(r io.Reader) *Reader {
+func newReader(r io.Reader) *reader {
 	bufBackend := make([]byte, 256)
-	return &Reader{r: r, bufBackend: bufBackend, buf: buffer{current: bufBackend[0:0]}}
+	return &reader{r: r, bufBackend: bufBackend, buf: buffer{current: bufBackend[0:0]}}
 }
 
-var _ io.Reader = &Reader{}
+var _ io.Reader = &reader{}
 
-func (br *Reader) Read(p []byte) (n int, err error) {
+func (br *reader) Read(p []byte) (n int, err error) {
 	if br.buf.IsEmpty() && br.lastErr == io.EOF {
 		return 0, io.EOF
 	}
@@ -38,6 +38,6 @@ func (br *Reader) Read(p []byte) (n int, err error) {
 	return n + n2, err
 }
 
-func (br *Reader) Unread(p []byte) {
+func (br *reader) Unread(p []byte) {
 	br.buf.Unread(p)
 }

@@ -8,7 +8,7 @@ import (
 )
 
 func TestEmptyRead(t *testing.T) {
-	r := EOFReader()
+	r := eofReader()
 	buf := []byte{}
 	n, err := r.Read(buf)
 
@@ -16,7 +16,7 @@ func TestEmptyRead(t *testing.T) {
 }
 
 func TestEOFRead(t *testing.T) {
-	r := EOFReader()
+	r := eofReader()
 	buf := make([]byte, 1)
 	n, err := r.Read(buf)
 
@@ -24,7 +24,7 @@ func TestEOFRead(t *testing.T) {
 }
 
 func TestRead(t *testing.T) {
-	r := StringReader("abc")
+	r := stringReader("abc")
 	buf := make([]byte, 1)
 
 	n, err := r.Read(buf)
@@ -47,14 +47,14 @@ func TestRead(t *testing.T) {
 	assertReader(t, r, []byte{}, io.EOF)
 }
 
-func EOFReader() *Reader {
-	return NewReader(bytes.NewReader([]byte{}))
+func eofReader() *reader {
+	return newReader(bytes.NewReader([]byte{}))
 }
 
-func StringReader(s string) *Reader {
-	return NewReader(strings.NewReader(s))
+func stringReader(s string) *reader {
+	return newReader(strings.NewReader(s))
 }
 
-func ByteReader(b []byte) *Reader {
-	return NewReader(bytes.NewReader(b))
+func byteReader(b []byte) *reader {
+	return newReader(bytes.NewReader(b))
 }

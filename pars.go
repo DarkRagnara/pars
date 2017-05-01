@@ -2,18 +2,24 @@ package pars
 
 import (
 	"fmt"
+	"io"
 	"strings"
 	"unicode/utf8"
 )
 
 type Parser interface {
-	Parse(*Reader) (interface{}, error)
-	Unread(*Reader)
+	Parse(*reader) (interface{}, error)
+	Unread(*reader)
 	Clone() Parser
 }
 
 func ParseString(s string, p Parser) (interface{}, error) {
-	r := NewReader(strings.NewReader(s))
+	r := newReader(strings.NewReader(s))
+	return p.Parse(r)
+}
+
+func ParseFromReader(ior io.Reader, p Parser) (interface{}, error) {
+	r := newReader(ior)
 	return p.Parse(r)
 }
 
@@ -29,7 +35,7 @@ func NewAnyRune() Parser {
 var ErrRuneExpected = fmt.Errorf("Expected rune")
 
 //Parse tries to read a single rune or fails.
-func (r *AnyRune) Parse(src *Reader) (interface{}, error) {
+func (r *AnyRune) Parse(src *reader) (interface{}, error) {
 	r.buf = make([]byte, utf8.UTFMax)
 
 	r.i = 0
@@ -58,7 +64,7 @@ func (r *AnyRune) Parse(src *Reader) (interface{}, error) {
 	return nil, ErrRuneExpected
 }
 
-func (r *AnyRune) Unread(src *Reader) {
+func (r *AnyRune) Unread(src *reader) {
 	if r.i >= 0 && r.buf != nil {
 		src.Unread(r.buf[:r.i+1])
 		r.buf = nil
@@ -79,7 +85,7 @@ func NewAnyByte() Parser {
 	return &AnyByte{}
 }
 
-func (b *AnyByte) Parse(src *Reader) (interface{}, error) {
+func (b *AnyByte) Parse(src *reader) (interface{}, error) {
 	n, err := src.Read(b.buf[:])
 	if err != nil {
 		return nil, err
@@ -91,7 +97,7 @@ func (b *AnyByte) Parse(src *Reader) (interface{}, error) {
 	return b.buf[0], nil
 }
 
-func (b *AnyByte) Unread(src *Reader) {
+func (b *AnyByte) Unread(src *reader) {
 	if b.read {
 		src.Unread(b.buf[:])
 		b.read = false
@@ -111,7 +117,7 @@ func NewChar(r rune) Parser {
 	return &Char{expected: r}
 }
 
-func (c *Char) Parse(src *Reader) (interface{}, error) {
+func (c *Char) Parse(src *reader) (interface{}, error) {
 	val, err := c.AnyRune.Parse(src)
 	if err != nil {
 		return nil, fmt.Errorf("Could not parse expected rune '%c' (0x%x): %v", c.expected, c.expected, err.Error())
@@ -139,7 +145,7 @@ func NewCharPred(pred func(rune) bool) Parser {
 	return &CharPred{pred: pred}
 }
 
-func (c *CharPred) Parse(src *Reader) (interface{}, error) {
+func (c *CharPred) Parse(src *reader) (interface{}, error) {
 	val, err := c.AnyRune.Parse(src)
 	if err != nil {
 		return nil, fmt.Errorf("Could not parse expected rune: %v", err.Error())
@@ -167,7 +173,7 @@ func NewSeq(parsers ...Parser) Parser {
 	return &Seq{parsers: parsers}
 }
 
-func (s *Seq) Parse(src *Reader) (interface{}, error) {
+func (s *Seq) Parse(src *reader) (interface{}, error) {
 	values := make([]interface{}, len(s.parsers))
 	for i, parser := range s.parsers {
 		val, err := parser.Parse(src)
@@ -182,7 +188,7 @@ func (s *Seq) Parse(src *Reader) (interface{}, error) {
 	return values, nil
 }
 
-func (s *Seq) Unread(src *Reader) {
+func (s *Seq) Unread(src *reader) {
 	for i := len(s.parsers) - 1; i >= 0; i-- {
 		s.parsers[i].Unread(src)
 	}
@@ -207,7 +213,7 @@ func NewOr(parsers ...Parser) Parser {
 	return &Or{parsers: parsers}
 }
 
-func (o *Or) Parse(src *Reader) (val interface{}, err error) {
+func (o *Or) Parse(src *reader) (val interface{}, err error) {
 	for _, parser := range o.parsers {
 		val, err = parser.Parse(src)
 		if err == nil {
@@ -218,7 +224,7 @@ func (o *Or) Parse(src *Reader) (val interface{}, err error) {
 	return
 }
 
-func (o *Or) Unread(src *Reader) {
+func (o *Or) Unread(src *reader) {
 	if o.selected != nil {
 		o.selected.Unread(src)
 		o.selected = nil
@@ -242,7 +248,7 @@ func NewString(expected string) Parser {
 	return &String{expected: expected}
 }
 
-func (s *String) Parse(src *Reader) (val interface{}, err error) {
+func (s *String) Parse(src *reader) (val interface{}, err error) {
 	s.buf = make([]byte, len([]byte(s.expected)))
 	n, err := src.Read(s.buf)
 
@@ -259,7 +265,7 @@ func (s *String) Parse(src *Reader) (val interface{}, err error) {
 	return nil, fmt.Errorf("Could not parse expected string \"%v\": %v", s.expected, err)
 }
 
-func (s *String) Unread(src *Reader) {
+func (s *String) Unread(src *reader) {
 	if s.buf != nil {
 		src.Unread(s.buf)
 		s.buf = nil

@@ -7,8 +7,18 @@ import (
 	"unicode"
 )
 
+func TestParseStringFunc(t *testing.T) {
+	val, err := ParseString("abc", NewString("ab"))
+	assertParse(t, val, err, "ab", nil)
+}
+
+func TestParseFromReaderFunc(t *testing.T) {
+	val, err := ParseFromReader(stringReader("abc"), NewString("ab"))
+	assertParse(t, val, err, "ab", nil)
+}
+
 func TestParseRune(t *testing.T) {
-	r := StringReader("abc")
+	r := stringReader("abc")
 
 	aParser := AnyRune{}
 	a, aErr := aParser.Parse(r)
@@ -28,7 +38,7 @@ func TestParseRune(t *testing.T) {
 }
 
 func TestParseUTFRune(t *testing.T) {
-	r := ByteReader([]byte{97, 0xe2, 0x82, 0xac, 99})
+	r := byteReader([]byte{97, 0xe2, 0x82, 0xac, 99})
 
 	aParser := AnyRune{}
 	a, aErr := aParser.Parse(r)
@@ -48,7 +58,7 @@ func TestParseUTFRune(t *testing.T) {
 }
 
 func TestPartOfRune(t *testing.T) {
-	r := ByteReader([]byte{0xe2, 0x82})
+	r := byteReader([]byte{0xe2, 0x82})
 
 	parser := AnyRune{}
 	val, err := parser.Parse(r)
@@ -59,7 +69,7 @@ func TestPartOfRune(t *testing.T) {
 }
 
 func TestExpectedRune(t *testing.T) {
-	r := ByteReader([]byte{0xf5, 0xbf, 0xbf, 0xbf})
+	r := byteReader([]byte{0xf5, 0xbf, 0xbf, 0xbf})
 
 	parser := AnyRune{}
 	val, err := parser.Parse(r)
@@ -70,7 +80,7 @@ func TestExpectedRune(t *testing.T) {
 }
 
 func TestParseByte(t *testing.T) {
-	r := ByteReader([]byte{1, 2, 3})
+	r := byteReader([]byte{1, 2, 3})
 
 	parser1 := AnyByte{}
 	val1, err1 := parser1.Parse(r)
@@ -93,7 +103,7 @@ func TestParseByte(t *testing.T) {
 }
 
 func TestParseExpectedChars(t *testing.T) {
-	r := StringReader("aba")
+	r := stringReader("aba")
 
 	aParser := NewChar('a')
 	aVal, aErr := aParser.Parse(r)
@@ -116,7 +126,7 @@ func TestParseExpectedChars(t *testing.T) {
 }
 
 func TestParseUnexpectedChars(t *testing.T) {
-	r := StringReader("a")
+	r := stringReader("a")
 
 	bParser := NewChar('€')
 	bVal, bErr := bParser.Parse(r)
@@ -138,7 +148,7 @@ func TestParseUnexpectedChars(t *testing.T) {
 }
 
 func TestParseExpectedCharPred(t *testing.T) {
-	r := StringReader(" \t")
+	r := stringReader(" \t")
 
 	spaceParser := NewCharPred(unicode.IsSpace)
 	spaceVal, spaceErr := spaceParser.Parse(r)
@@ -157,7 +167,7 @@ func TestParseExpectedCharPred(t *testing.T) {
 }
 
 func TestParseUnexpectedCharPred(t *testing.T) {
-	r := StringReader("a")
+	r := stringReader("a")
 
 	spaceParser := NewCharPred(unicode.IsSpace)
 	spaceVal, spaceErr := spaceParser.Parse(r)
@@ -179,7 +189,7 @@ func TestParseUnexpectedCharPred(t *testing.T) {
 }
 
 func TestParseSeq(t *testing.T) {
-	r := StringReader("a€ca€c")
+	r := stringReader("a€ca€c")
 
 	seqParser := NewSeq(NewChar('a'), NewChar('€'), NewChar('c'))
 	seqVal, seqErr := seqParser.Parse(r)
@@ -200,7 +210,7 @@ func TestParseSeq(t *testing.T) {
 }
 
 func TestParseSeqFailed(t *testing.T) {
-	r := StringReader("a€d")
+	r := stringReader("a€d")
 
 	seqParser := NewSeq(NewChar('a'), NewChar('€'), NewChar('c'))
 	seqVal, seqErr := seqParser.Parse(r)
@@ -223,7 +233,7 @@ func TestParseSeqFailed(t *testing.T) {
 }
 
 func TestParseOr(t *testing.T) {
-	r := StringReader("aba")
+	r := stringReader("aba")
 
 	orParserA := NewOr(NewChar('a'), NewChar('b'))
 	aVal, aErr := orParserA.Parse(r)
@@ -246,7 +256,7 @@ func TestParseOr(t *testing.T) {
 }
 
 func TestParseOrFailed(t *testing.T) {
-	r := StringReader("c")
+	r := stringReader("c")
 
 	orParserA := NewOr(NewChar('a'), NewChar('b'))
 	aVal, aErr := orParserA.Parse(r)
@@ -269,7 +279,7 @@ func TestParseOrFailed(t *testing.T) {
 
 func BenchmarkParseStringSeq(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		r := StringReader("Hello world")
+		r := stringReader("Hello world")
 
 		helloParser := NewSeq(NewChar('H'), NewChar('e'), NewChar('l'), NewChar('l'), NewChar('o'), NewChar(' '), NewChar('w'), NewChar('o'), NewChar('r'), NewChar('l'), NewChar('d'))
 		helloParser.Parse(r)
@@ -277,7 +287,7 @@ func BenchmarkParseStringSeq(b *testing.B) {
 }
 
 func TestParseString(t *testing.T) {
-	r := StringReader("abcabc")
+	r := stringReader("abcabc")
 
 	abcParser := NewString("abc")
 	abcVal1, abcErr1 := abcParser.Parse(r)
@@ -296,7 +306,7 @@ func TestParseString(t *testing.T) {
 }
 
 func TestParseUnexpectedString(t *testing.T) {
-	r := StringReader("abc")
+	r := stringReader("abc")
 
 	abdParser := NewString("abd")
 	abdVal, abdErr := abdParser.Parse(r)
@@ -316,7 +326,7 @@ func TestParseUnexpectedString(t *testing.T) {
 
 func BenchmarkParseStringString(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		r := StringReader("Hello world")
+		r := stringReader("Hello world")
 
 		helloParser := NewString("Hello world")
 		helloParser.Parse(r)
