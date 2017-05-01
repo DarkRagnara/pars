@@ -22,7 +22,9 @@ type AnyRune struct {
 	i   int
 }
 
-var _ Parser = &AnyRune{}
+func NewAnyRune() Parser {
+	return &AnyRune{}
+}
 
 var ErrRuneExpected = fmt.Errorf("Expected rune")
 
@@ -73,7 +75,9 @@ type AnyByte struct {
 	read bool
 }
 
-var _ Parser = &AnyByte{}
+func NewAnyByte() Parser {
+	return &AnyByte{}
+}
 
 func (b *AnyByte) Parse(src *Reader) (interface{}, error) {
 	n, err := src.Read(b.buf[:])
@@ -107,8 +111,6 @@ func NewChar(r rune) Parser {
 	return &Char{expected: r}
 }
 
-var _ Parser = &Char{}
-
 func (c *Char) Parse(src *Reader) (interface{}, error) {
 	val, err := c.AnyRune.Parse(src)
 	if err != nil {
@@ -137,8 +139,6 @@ func NewCharPred(pred func(rune) bool) Parser {
 	return &CharPred{pred: pred}
 }
 
-var _ Parser = &CharPred{}
-
 func (c *CharPred) Parse(src *Reader) (interface{}, error) {
 	val, err := c.AnyRune.Parse(src)
 	if err != nil {
@@ -162,8 +162,6 @@ func (c *CharPred) Clone() Parser {
 type Seq struct {
 	parsers []Parser
 }
-
-var _ Parser = &Seq{}
 
 func NewSeq(parsers ...Parser) Parser {
 	return &Seq{parsers: parsers}
@@ -205,8 +203,6 @@ type Or struct {
 	selected Parser
 }
 
-var _ Parser = &Or{}
-
 func NewOr(parsers ...Parser) Parser {
 	return &Or{parsers: parsers}
 }
@@ -235,4 +231,41 @@ func (o *Or) Clone() Parser {
 		o2.parsers[i] = parser.Clone()
 	}
 	return o2
+}
+
+type String struct {
+	expected string
+	buf      []byte
+}
+
+func NewString(expected string) Parser {
+	return &String{expected: expected}
+}
+
+func (s *String) Parse(src *Reader) (val interface{}, err error) {
+	s.buf = make([]byte, len([]byte(s.expected)))
+	n, err := src.Read(s.buf)
+
+	if n == len(s.buf) && string(s.buf) == s.expected {
+		return string(s.buf), nil
+	}
+
+	if n == len(s.buf) {
+		err = fmt.Errorf("Unexpected string \"%v\"", string(s.buf))
+	}
+
+	src.Unread(s.buf[:n])
+	s.buf = nil
+	return nil, fmt.Errorf("Could not parse expected string \"%v\": %v", s.expected, err)
+}
+
+func (s *String) Unread(src *Reader) {
+	if s.buf != nil {
+		src.Unread(s.buf)
+		s.buf = nil
+	}
+}
+
+func (s *String) Clone() Parser {
+	return NewString(s.expected)
 }

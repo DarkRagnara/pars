@@ -266,3 +266,59 @@ func TestParseOrFailed(t *testing.T) {
 	assertBytes(t, r.buf.current, []byte{})
 	assertBytes(t, r.buf.prepend, []byte{})
 }
+
+func BenchmarkParseStringSeq(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		r := StringReader("Hello world")
+
+		helloParser := NewSeq(NewChar('H'), NewChar('e'), NewChar('l'), NewChar('l'), NewChar('o'), NewChar(' '), NewChar('w'), NewChar('o'), NewChar('r'), NewChar('l'), NewChar('d'))
+		helloParser.Parse(r)
+	}
+}
+
+func TestParseString(t *testing.T) {
+	r := StringReader("abcabc")
+
+	abcParser := NewString("abc")
+	abcVal1, abcErr1 := abcParser.Parse(r)
+	assertParse(t, abcVal1, abcErr1, "abc", nil)
+
+	abcParser2 := abcParser.Clone()
+	abcVal2, abcErr2 := abcParser2.Parse(r)
+	assertParse(t, abcVal2, abcErr2, "abc", nil)
+
+	parserEOF := abcParser.Clone()
+	valEOF, errEOF := parserEOF.Parse(r)
+	assertParse(t, valEOF, errEOF, nil, fmt.Errorf("Could not parse expected string \"abc\": EOF"))
+
+	assertBytes(t, r.buf.current, []byte{})
+	assertBytes(t, r.buf.prepend, []byte{})
+}
+
+func TestParseUnexpectedString(t *testing.T) {
+	r := StringReader("abc")
+
+	abdParser := NewString("abd")
+	abdVal, abdErr := abdParser.Parse(r)
+	assertParse(t, abdVal, abdErr, nil, fmt.Errorf("Could not parse expected string \"abd\": Unexpected string \"abc\""))
+
+	abcParser := NewString("abc")
+	abcVal1, abcErr1 := abcParser.Parse(r)
+	assertParse(t, abcVal1, abcErr1, "abc", nil)
+
+	parserEOF := abcParser.Clone()
+	valEOF, errEOF := parserEOF.Parse(r)
+	assertParse(t, valEOF, errEOF, nil, fmt.Errorf("Could not parse expected string \"abc\": EOF"))
+
+	assertBytes(t, r.buf.current, []byte{})
+	assertBytes(t, r.buf.prepend, []byte{})
+}
+
+func BenchmarkParseStringString(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		r := StringReader("Hello world")
+
+		helloParser := NewString("Hello world")
+		helloParser.Parse(r)
+	}
+}
