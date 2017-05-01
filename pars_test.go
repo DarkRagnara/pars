@@ -221,3 +221,48 @@ func TestParseSeqFailed(t *testing.T) {
 	assertBytes(t, r.buf.current, []byte{})
 	assertBytes(t, r.buf.prepend, []byte{})
 }
+
+func TestParseOr(t *testing.T) {
+	r := StringReader("aba")
+
+	orParserA := NewOr(NewChar('a'), NewChar('b'))
+	aVal, aErr := orParserA.Parse(r)
+	assertParse(t, aVal, aErr, 'a', nil)
+
+	orParserB := orParserA.Clone()
+	bVal, bErr := orParserB.Parse(r)
+	assertParse(t, bVal, bErr, 'b', nil)
+
+	orParserA2 := orParserA.Clone()
+	aVal2, aErr2 := orParserA2.Parse(r)
+	assertParse(t, aVal2, aErr2, 'a', nil)
+
+	parserEOF := orParserA.Clone()
+	valEOF, errEOF := parserEOF.Parse(r)
+	assertParse(t, valEOF, errEOF, nil, fmt.Errorf("Could not parse expected rune 'b' (0x62): EOF"))
+
+	assertBytes(t, r.buf.current, []byte{})
+	assertBytes(t, r.buf.prepend, []byte{})
+}
+
+func TestParseOrFailed(t *testing.T) {
+	r := StringReader("c")
+
+	orParserA := NewOr(NewChar('a'), NewChar('b'))
+	aVal, aErr := orParserA.Parse(r)
+	assertParse(t, aVal, aErr, nil, fmt.Errorf("Could not parse expected rune 'b' (0x62): Unexpected rune 'c' (0x63)"))
+
+	assertBytes(t, r.buf.current, []byte{})
+	assertBytes(t, r.buf.prepend, []byte{0x63})
+
+	orParserC := NewOr(NewChar('c'))
+	cVal, cErr := orParserC.Parse(r)
+	assertParse(t, cVal, cErr, 'c', nil)
+
+	parserEOF := orParserA.Clone()
+	valEOF, errEOF := parserEOF.Parse(r)
+	assertParse(t, valEOF, errEOF, nil, fmt.Errorf("Could not parse expected rune 'b' (0x62): EOF"))
+
+	assertBytes(t, r.buf.current, []byte{})
+	assertBytes(t, r.buf.prepend, []byte{})
+}

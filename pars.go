@@ -57,7 +57,7 @@ func (r *AnyRune) Parse(src *Reader) (interface{}, error) {
 }
 
 func (r *AnyRune) Unread(src *Reader) {
-	if r.i >= 0 {
+	if r.i >= 0 && r.buf != nil {
 		src.Unread(r.buf[:r.i+1])
 		r.buf = nil
 		r.i = 0
@@ -196,4 +196,43 @@ func (s *Seq) Clone() Parser {
 		s2.parsers[i] = parser.Clone()
 	}
 	return s2
+}
+
+//Or is a parser that matches the first of a given set of parsers. A later parser will not be tried if an earlier match was found.
+//Or uses the error message of the last parser verbatim.
+type Or struct {
+	parsers  []Parser
+	selected Parser
+}
+
+var _ Parser = &Or{}
+
+func NewOr(parsers ...Parser) Parser {
+	return &Or{parsers: parsers}
+}
+
+func (o *Or) Parse(src *Reader) (val interface{}, err error) {
+	for _, parser := range o.parsers {
+		val, err = parser.Parse(src)
+		if err == nil {
+			o.selected = parser
+			return
+		}
+	}
+	return
+}
+
+func (o *Or) Unread(src *Reader) {
+	if o.selected != nil {
+		o.selected.Unread(src)
+		o.selected = nil
+	}
+}
+
+func (o *Or) Clone() Parser {
+	o2 := &Or{parsers: make([]Parser, len(o.parsers))}
+	for i, parser := range o.parsers {
+		o2.parsers[i] = parser.Clone()
+	}
+	return o2
 }
