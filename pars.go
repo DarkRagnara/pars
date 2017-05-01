@@ -24,7 +24,7 @@ type AnyRune struct {
 
 var _ Parser = &AnyRune{}
 
-var RuneExpected error = errors.New("Expected rune")
+var ErrRuneExpected = errors.New("Expected rune")
 
 //Parse tries to read a single rune or fails.
 func (r *AnyRune) Parse(src *Reader) (interface{}, error) {
@@ -47,14 +47,13 @@ func (r *AnyRune) Parse(src *Reader) (interface{}, error) {
 
 			if rune != 0xfffd {
 				return rune, nil
-			} else {
-				break
 			}
+			break
 		}
 	}
 
 	r.Unread(src)
-	return nil, RuneExpected
+	return nil, ErrRuneExpected
 }
 
 func (r *AnyRune) Unread(src *Reader) {
