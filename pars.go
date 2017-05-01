@@ -300,3 +300,23 @@ func (e eof) Unread(src *reader) {
 func (e eof) Clone() Parser {
 	return e
 }
+
+//Error is a parser that always fails with the given error
+type Error struct {
+	error
+}
+
+func NewError(err error) Parser {
+	return Error{err}
+}
+
+func (e Error) Parse(src *reader) (interface{}, error) {
+	return nil, e.error
+}
+
+func (e Error) Unread(src *reader) {
+}
+
+func (e Error) Clone() Parser {
+	return e
+}

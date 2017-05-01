@@ -348,3 +348,16 @@ func TestParseEOF(t *testing.T) {
 	assertBytes(t, r.buf.current, []byte{})
 	assertBytes(t, r.buf.prepend, []byte{})
 }
+
+func TestError(t *testing.T) {
+	r := stringReader("a")
+
+	val, err := NewError(fmt.Errorf("Expected kanji")).Parse(r)
+	assertParse(t, val, err, nil, fmt.Errorf("Expected kanji"))
+
+	assertBytes(t, r.buf.current, []byte{})
+	assertBytes(t, r.buf.prepend, []byte{})
+
+	a, aErr := NewChar('a').Parse(r)
+	assertParse(t, a, aErr, 'a', nil)
+}
