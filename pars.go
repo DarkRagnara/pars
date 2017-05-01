@@ -1,9 +1,12 @@
 package pars
 
 import (
+	"bytes"
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 )
 
@@ -319,4 +322,54 @@ func (e Error) Unread(src *reader) {
 
 func (e Error) Clone() Parser {
 	return e
+}
+
+type Int struct {
+	parsers []Parser
+}
+
+func NewInt() Parser {
+	return &Int{}
+}
+
+func (i *Int) Parse(src *reader) (interface{}, error) {
+	buf := bytes.NewBuffer(nil)
+	var err error
+	for {
+		var next Parser
+		if buf.Len() == 0 {
+			next = NewOr(NewChar('-'), NewCharPred(unicode.IsDigit))
+		} else {
+			next = NewCharPred(unicode.IsDigit)
+		}
+		var val interface{}
+		val, err = next.Parse(src)
+		if err != nil {
+			next.Unread(src)
+			break
+		}
+		buf.WriteRune(val.(rune))
+		i.parsers = append(i.parsers, next)
+	}
+	if buf.Len() > 0 {
+		val, err := strconv.Atoi(buf.String())
+		if err != nil {
+			i.Unread(src)
+			return nil, fmt.Errorf("Could not parse int: %v", err)
+		}
+		return val, nil
+	}
+
+	return nil, fmt.Errorf("Could not parse int: %v", err)
+}
+
+func (i *Int) Unread(src *reader) {
+	for j := len(i.parsers) - 1; j >= 0; j-- {
+		i.parsers[j].Unread(src)
+	}
+	i.parsers = nil
+}
+
+func (i *Int) Clone() Parser {
+	return NewInt()
 }

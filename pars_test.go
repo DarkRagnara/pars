@@ -278,11 +278,9 @@ func TestParseOrFailed(t *testing.T) {
 }
 
 func BenchmarkParseStringSeq(b *testing.B) {
+	helloParser := NewSeq(NewChar('H'), NewChar('e'), NewChar('l'), NewChar('l'), NewChar('o'), NewChar(' '), NewChar('w'), NewChar('o'), NewChar('r'), NewChar('l'), NewChar('d'))
 	for i := 0; i < b.N; i++ {
-		r := stringReader("Hello world")
-
-		helloParser := NewSeq(NewChar('H'), NewChar('e'), NewChar('l'), NewChar('l'), NewChar('o'), NewChar(' '), NewChar('w'), NewChar('o'), NewChar('r'), NewChar('l'), NewChar('d'))
-		helloParser.Parse(r)
+		ParseString("Hello world", helloParser)
 	}
 }
 
@@ -325,11 +323,9 @@ func TestParseUnexpectedString(t *testing.T) {
 }
 
 func BenchmarkParseStringString(b *testing.B) {
+	helloParser := NewString("Hello world")
 	for i := 0; i < b.N; i++ {
-		r := stringReader("Hello world")
-
-		helloParser := NewString("Hello world")
-		helloParser.Parse(r)
+		ParseString("Hello world", helloParser)
 	}
 }
 
@@ -360,4 +356,64 @@ func TestError(t *testing.T) {
 
 	a, aErr := NewChar('a').Parse(r)
 	assertParse(t, a, aErr, 'a', nil)
+}
+
+func TestParseInt(t *testing.T) {
+	r := stringReader("123a-456")
+
+	intParser := NewInt()
+	val, err := intParser.Parse(r)
+	assertParse(t, val, err, 123, nil)
+
+	aVal, aErr := intParser.Clone().Parse(r)
+	assertParse(t, aVal, aErr, nil, fmt.Errorf("Could not parse int: Could not parse expected rune: Rune 'a' (0x61) does not hold predicate"))
+
+	aVal, aErr = NewChar('a').Parse(r)
+	assertParse(t, aVal, aErr, 'a', nil)
+
+	val, err = intParser.Clone().Parse(r)
+	assertParse(t, val, err, -456, nil)
+
+	eofVal, eofErr := NewInt().Parse(r)
+	assertParse(t, eofVal, eofErr, nil, fmt.Errorf("Could not parse int: Could not parse expected rune: EOF"))
+}
+
+func TestParseIntToHuge(t *testing.T) {
+	tooLong := "12345678901234567890123456789012345678901234567890"
+	r := stringReader(tooLong)
+
+	val, err := NewInt().Parse(r)
+	assertParse(t, val, err, nil, fmt.Errorf("Could not parse int: strconv.Atoi: parsing \"%v\": value out of range", tooLong))
+
+	str, err := NewString(tooLong).Parse(r)
+	assertParse(t, str, err, tooLong, nil)
+}
+
+func TestParseIntMisplacedMinus(t *testing.T) {
+	r := stringReader("123-456")
+
+	val, err := NewInt().Parse(r)
+	assertParse(t, val, err, 123, nil)
+
+	val, err = NewInt().Parse(r)
+	assertParse(t, val, err, -456, nil)
+}
+
+func TestParseIntOnlyMinusError(t *testing.T) {
+	r := stringReader("--789")
+
+	val, err := NewInt().Parse(r)
+	assertParse(t, val, err, nil, fmt.Errorf("Could not parse int: strconv.Atoi: parsing \"-\": invalid syntax"))
+
+	val, err = NewChar('-').Parse(r)
+	assertParse(t, val, err, '-', nil)
+
+	val, err = NewInt().Parse(r)
+	assertParse(t, val, err, -789, nil)
+}
+
+func BenchmarkParseInt(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		ParseString("1234567", NewInt())
+	}
 }
