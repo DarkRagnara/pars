@@ -247,6 +247,7 @@ func (s *Some) Unread(src *reader) {
 	for i := len(s.used) - 1; i >= 0; i-- {
 		s.used[i].Unread(src)
 	}
+	s.used = nil
 }
 
 func (s *Some) Clone() Parser {
