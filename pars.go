@@ -35,20 +35,20 @@ func ParseFromReader(ior io.Reader, p Parser) (interface{}, error) {
 	return p.Parse(r)
 }
 
-//AnyRune is a parser that parses a single valid rune. If no such rune can be read, ErrRuneExpected is returned.
-type AnyRune struct {
+type anyRuneParser struct {
 	buf []byte
 	i   int
 }
 
+//NewAnyRune returns a parser that parses a single valid rune. If no such rune can be read, ErrRuneExpected is returned.
 func NewAnyRune() Parser {
-	return &AnyRune{}
+	return &anyRuneParser{}
 }
 
-//ErrRuneExpected is the error returned from an unsuccessful AnyRune parsing.
+//ErrRuneExpected is the error returned from an unsuccessful parsing of a parser returned by NewAnyRune.
 var ErrRuneExpected = fmt.Errorf("Expected rune")
 
-func (r *AnyRune) Parse(src *reader) (interface{}, error) {
+func (r *anyRuneParser) Parse(src *reader) (interface{}, error) {
 	r.buf = make([]byte, utf8.UTFMax)
 
 	r.i = 0
@@ -77,7 +77,7 @@ func (r *AnyRune) Parse(src *reader) (interface{}, error) {
 	return nil, ErrRuneExpected
 }
 
-func (r *AnyRune) Unread(src *reader) {
+func (r *anyRuneParser) Unread(src *reader) {
 	if r.i >= 0 && r.buf != nil {
 		src.Unread(r.buf[:r.i+1])
 		r.buf = nil
@@ -85,21 +85,21 @@ func (r *AnyRune) Unread(src *reader) {
 	}
 }
 
-func (r *AnyRune) Clone() Parser {
-	return &AnyRune{}
+func (r *anyRuneParser) Clone() Parser {
+	return &anyRuneParser{}
 }
 
-//AnyByte is a parser that reads exactly one byte from the source.
-type AnyByte struct {
+type anyByteParser struct {
 	buf  [1]byte
 	read bool
 }
 
+//NewAnyByte returns a parser that reads exactly one byte from the source.
 func NewAnyByte() Parser {
-	return &AnyByte{}
+	return &anyByteParser{}
 }
 
-func (b *AnyByte) Parse(src *reader) (interface{}, error) {
+func (b *anyByteParser) Parse(src *reader) (interface{}, error) {
 	n, err := src.Read(b.buf[:])
 	if err != nil {
 		return nil, err
@@ -111,29 +111,29 @@ func (b *AnyByte) Parse(src *reader) (interface{}, error) {
 	return b.buf[0], nil
 }
 
-func (b *AnyByte) Unread(src *reader) {
+func (b *anyByteParser) Unread(src *reader) {
 	if b.read {
 		src.Unread(b.buf[:])
 		b.read = false
 	}
 }
 
-func (b *AnyByte) Clone() Parser {
-	return &AnyByte{}
+func (b *anyByteParser) Clone() Parser {
+	return &anyByteParser{}
 }
 
-//Char is a parser used to read a single known rune. A different rune is treated as a parsing error.
-type Char struct {
+type charParser struct {
 	expected rune
-	AnyRune
+	anyRuneParser
 }
 
+//NewChar returns a parser used to read a single known rune. A different rune is treated as a parsing error.
 func NewChar(r rune) Parser {
-	return &Char{expected: r}
+	return &charParser{expected: r}
 }
 
-func (c *Char) Parse(src *reader) (interface{}, error) {
-	val, err := c.AnyRune.Parse(src)
+func (c *charParser) Parse(src *reader) (interface{}, error) {
+	val, err := c.anyRuneParser.Parse(src)
 	if err != nil {
 		return nil, fmt.Errorf("Could not parse expected rune '%c' (0x%x): %v", c.expected, c.expected, err.Error())
 	}
@@ -141,28 +141,28 @@ func (c *Char) Parse(src *reader) (interface{}, error) {
 		if val == c.expected {
 			return val, nil
 		}
-		c.AnyRune.Unread(src)
+		c.anyRuneParser.Unread(src)
 		return nil, fmt.Errorf("Could not parse expected rune '%c' (0x%x): Unexpected rune '%c' (0x%x)", c.expected, c.expected, val, val)
 	}
 	panic("AnyRune returned type != rune")
 }
 
-func (c *Char) Clone() Parser {
+func (c *charParser) Clone() Parser {
 	return NewChar(c.expected)
 }
 
-//CharPred parses a single rune as long as it fulfills the given predicate.
-type CharPred struct {
+type charPredParser struct {
 	pred func(rune) bool
-	AnyRune
+	anyRuneParser
 }
 
+//NewCharPred returns a parser that parses a single rune as long as it fulfills the given predicate.
 func NewCharPred(pred func(rune) bool) Parser {
-	return &CharPred{pred: pred}
+	return &charPredParser{pred: pred}
 }
 
-func (c *CharPred) Parse(src *reader) (interface{}, error) {
-	val, err := c.AnyRune.Parse(src)
+func (c *charPredParser) Parse(src *reader) (interface{}, error) {
+	val, err := c.anyRuneParser.Parse(src)
 	if err != nil {
 		return nil, fmt.Errorf("Could not parse expected rune: %v", err.Error())
 	}
@@ -170,26 +170,26 @@ func (c *CharPred) Parse(src *reader) (interface{}, error) {
 		if c.pred(val) {
 			return val, nil
 		}
-		c.AnyRune.Unread(src)
+		c.anyRuneParser.Unread(src)
 		return nil, fmt.Errorf("Could not parse expected rune: Rune '%c' (0x%x) does not hold predicate", val, val)
 	}
 	panic("AnyRune returned type != rune")
 }
 
-func (c *CharPred) Clone() Parser {
+func (c *charPredParser) Clone() Parser {
 	return NewCharPred(c.pred)
 }
 
-//Seq is a parser that matches all of its given parsers in order or none of them.
-type Seq struct {
+type seqParser struct {
 	parsers []Parser
 }
 
+//NewSeq returns a parser that matches all of its given parsers in order or none of them.
 func NewSeq(parsers ...Parser) Parser {
-	return &Seq{parsers: parsers}
+	return &seqParser{parsers: parsers}
 }
 
-func (s *Seq) Parse(src *reader) (interface{}, error) {
+func (s *seqParser) Parse(src *reader) (interface{}, error) {
 	values := make([]interface{}, len(s.parsers))
 	for i, parser := range s.parsers {
 		val, err := parser.Parse(src)
@@ -204,31 +204,31 @@ func (s *Seq) Parse(src *reader) (interface{}, error) {
 	return values, nil
 }
 
-func (s *Seq) Unread(src *reader) {
+func (s *seqParser) Unread(src *reader) {
 	for i := len(s.parsers) - 1; i >= 0; i-- {
 		s.parsers[i].Unread(src)
 	}
 }
 
-func (s *Seq) Clone() Parser {
-	s2 := &Seq{parsers: make([]Parser, len(s.parsers))}
+func (s *seqParser) Clone() Parser {
+	s2 := &seqParser{parsers: make([]Parser, len(s.parsers))}
 	for i, parser := range s.parsers {
 		s2.parsers[i] = parser.Clone()
 	}
 	return s2
 }
 
-//Some matches a given parser zero or more times. Not matching at all is not an error.
-type Some struct {
+type someParser struct {
 	prototype Parser
 	used      []Parser
 }
 
+//NewSome returns a parser that matches a given parser zero or more times. Not matching at all is not an error.
 func NewSome(parser Parser) Parser {
-	return &Some{prototype: parser}
+	return &someParser{prototype: parser}
 }
 
-func (s *Some) Parse(src *reader) (interface{}, error) {
+func (s *someParser) Parse(src *reader) (interface{}, error) {
 	var values []interface{}
 	for {
 		next := s.prototype.Clone()
@@ -243,27 +243,27 @@ func (s *Some) Parse(src *reader) (interface{}, error) {
 	return values, nil
 }
 
-func (s *Some) Unread(src *reader) {
+func (s *someParser) Unread(src *reader) {
 	for i := len(s.used) - 1; i >= 0; i-- {
 		s.used[i].Unread(src)
 	}
 	s.used = nil
 }
 
-func (s *Some) Clone() Parser {
-	return &Some{prototype: s.prototype.Clone()}
+func (s *someParser) Clone() Parser {
+	return &someParser{prototype: s.prototype.Clone()}
 }
 
-//Many matches a given parser one or more times. Not matching at all is an error.
-type Many struct {
+type manyParser struct {
 	Parser
 }
 
+//NewMany returns a parser that matches a given parser one or more times. Not matching at all is an error.
 func NewMany(parser Parser) Parser {
-	return &Many{Parser: NewSeq(parser, NewSome(parser))}
+	return &manyParser{Parser: NewSeq(parser, NewSome(parser))}
 }
 
-func (m *Many) Parse(src *reader) (interface{}, error) {
+func (m *manyParser) Parse(src *reader) (interface{}, error) {
 	val, err := m.Parser.Parse(src)
 	if err != nil {
 		return nil, err
@@ -275,22 +275,22 @@ func (m *Many) Parse(src *reader) (interface{}, error) {
 	return values, nil
 }
 
-func (m *Many) Clone() Parser {
-	return &Many{Parser: m.Parser.Clone()}
+func (m *manyParser) Clone() Parser {
+	return &manyParser{Parser: m.Parser.Clone()}
 }
 
-//Or is a parser that matches the first of a given set of parsers. A later parser will not be tried if an earlier match was found.
-//Or uses the error message of the last parser verbatim.
-type Or struct {
+type orParser struct {
 	parsers  []Parser
 	selected Parser
 }
 
+//NewOr returns a parser that matches the first of a given set of parsers. A later parser will not be tried if an earlier match was found.
+//The returned parser uses the error message of the last parser verbatim.
 func NewOr(parsers ...Parser) Parser {
-	return &Or{parsers: parsers}
+	return &orParser{parsers: parsers}
 }
 
-func (o *Or) Parse(src *reader) (val interface{}, err error) {
+func (o *orParser) Parse(src *reader) (val interface{}, err error) {
 	for _, parser := range o.parsers {
 		val, err = parser.Parse(src)
 		if err == nil {
@@ -301,32 +301,32 @@ func (o *Or) Parse(src *reader) (val interface{}, err error) {
 	return
 }
 
-func (o *Or) Unread(src *reader) {
+func (o *orParser) Unread(src *reader) {
 	if o.selected != nil {
 		o.selected.Unread(src)
 		o.selected = nil
 	}
 }
 
-func (o *Or) Clone() Parser {
-	o2 := &Or{parsers: make([]Parser, len(o.parsers))}
+func (o *orParser) Clone() Parser {
+	o2 := &orParser{parsers: make([]Parser, len(o.parsers))}
 	for i, parser := range o.parsers {
 		o2.parsers[i] = parser.Clone()
 	}
 	return o2
 }
 
-//String parses a single known string. Different strings are treated as a parsing error.
-type String struct {
+type stringParser struct {
 	expected string
 	buf      []byte
 }
 
+//NewString returns a parser for a single known string. Different strings are treated as a parsing error.
 func NewString(expected string) Parser {
-	return &String{expected: expected}
+	return &stringParser{expected: expected}
 }
 
-func (s *String) Parse(src *reader) (val interface{}, err error) {
+func (s *stringParser) Parse(src *reader) (val interface{}, err error) {
 	s.buf = make([]byte, len([]byte(s.expected)))
 	n, err := src.Read(s.buf)
 
@@ -343,27 +343,27 @@ func (s *String) Parse(src *reader) (val interface{}, err error) {
 	return nil, fmt.Errorf("Could not parse expected string \"%v\": %v", s.expected, err)
 }
 
-func (s *String) Unread(src *reader) {
+func (s *stringParser) Unread(src *reader) {
 	if s.buf != nil {
 		src.Unread(s.buf)
 		s.buf = nil
 	}
 }
 
-func (s *String) Clone() Parser {
+func (s *stringParser) Clone() Parser {
 	return NewString(s.expected)
 }
 
-//DelimitedString parses a string between two identical delimiter strings and returns the value between.
-type DelimitedString struct {
+type delimitedStringParser struct {
 	Parser
 }
 
+//NewDelimitedString returns a parser that parses a string between two identical delimiter strings and returns the value between.
 func NewDelimitedString(delimiter string) Parser {
-	return &DelimitedString{Parser: NewSeq(NewString(delimiter), NewSome(NewExcept(NewAnyRune(), NewString(delimiter))), NewString(delimiter))}
+	return &delimitedStringParser{Parser: NewSeq(NewString(delimiter), NewSome(NewExcept(NewAnyRune(), NewString(delimiter))), NewString(delimiter))}
 }
 
-func (d *DelimitedString) Parse(src *reader) (interface{}, error) {
+func (d *delimitedStringParser) Parse(src *reader) (interface{}, error) {
 	val, err := d.Parser.Parse(src)
 	if err != nil {
 		return nil, err
@@ -379,24 +379,24 @@ func (d *DelimitedString) Parse(src *reader) (interface{}, error) {
 	return builder.String(), nil
 }
 
-func (d *DelimitedString) Clone() Parser {
-	return &DelimitedString{Parser: d.Parser.Clone()}
+func (d *delimitedStringParser) Clone() Parser {
+	return &delimitedStringParser{Parser: d.Parser.Clone()}
 }
 
-//Except wraps a parser so that it fails if a second, excepted parser would succeed.
-type Except struct {
+type exceptParser struct {
 	Parser
 	except Parser
 }
 
-//ErrExceptionMatched signals that an Except parser matched its exception.
+//ErrExceptionMatched signals that an parser returned by exceptParser matched its exception.
 var ErrExceptionMatched = fmt.Errorf("Excepted parser matched")
 
+//NewExcept returns a parser that wraps another parser so that it fails if a third, excepted parser would succeed.
 func NewExcept(parser, except Parser) Parser {
-	return &Except{Parser: parser, except: except}
+	return &exceptParser{Parser: parser, except: except}
 }
 
-func (e *Except) Parse(src *reader) (val interface{}, err error) {
+func (e *exceptParser) Parse(src *reader) (val interface{}, err error) {
 	val, err = e.except.Parse(src)
 	if err == nil {
 		e.except.Unread(src)
@@ -406,7 +406,7 @@ func (e *Except) Parse(src *reader) (val interface{}, err error) {
 	return
 }
 
-func (e *Except) Clone() Parser {
+func (e *exceptParser) Clone() Parser {
 	return NewExcept(e.Parser.Clone(), e.except.Clone())
 }
 
@@ -435,36 +435,36 @@ func (e eof) Clone() Parser {
 	return e
 }
 
-//Error is a parser that always fails with the given error
-type Error struct {
+type errorParser struct {
 	error
 }
 
+//NewError returns a parser that always fails with the given error
 func NewError(err error) Parser {
-	return Error{err}
+	return errorParser{err}
 }
 
-func (e Error) Parse(src *reader) (interface{}, error) {
+func (e errorParser) Parse(src *reader) (interface{}, error) {
 	return nil, e.error
 }
 
-func (e Error) Unread(src *reader) {
+func (e errorParser) Unread(src *reader) {
 }
 
-func (e Error) Clone() Parser {
+func (e errorParser) Clone() Parser {
 	return e
 }
 
-//Int parses an integer. The parsed integer is converted via strconv.Atoi.
-type Int struct {
+type intParser struct {
 	parsers []Parser
 }
 
+//NewInt returns a parser that parses an integer. The parsed integer is converted via strconv.Atoi.
 func NewInt() Parser {
-	return &Int{}
+	return &intParser{}
 }
 
-func (i *Int) Parse(src *reader) (interface{}, error) {
+func (i *intParser) Parse(src *reader) (interface{}, error) {
 	buf := bytes.NewBuffer(nil)
 	var err error
 	for {
@@ -495,28 +495,28 @@ func (i *Int) Parse(src *reader) (interface{}, error) {
 	return nil, fmt.Errorf("Could not parse int: %v", err)
 }
 
-func (i *Int) Unread(src *reader) {
+func (i *intParser) Unread(src *reader) {
 	for j := len(i.parsers) - 1; j >= 0; j-- {
 		i.parsers[j].Unread(src)
 	}
 	i.parsers = nil
 }
 
-func (i *Int) Clone() Parser {
+func (i *intParser) Clone() Parser {
 	return NewInt()
 }
 
-//Optional is a parser that reads exactly one result according to a given other parser. If it fails, the error is discarded and nil is returned.
-type Optional struct {
+type optionalParser struct {
 	read bool
 	Parser
 }
 
+//NewOptional returns a parser that reads exactly one result according to a given other parser. If it fails, the error is discarded and nil is returned.
 func NewOptional(parser Parser) Parser {
-	return &Optional{Parser: parser}
+	return &optionalParser{Parser: parser}
 }
 
-func (o *Optional) Parse(src *reader) (interface{}, error) {
+func (o *optionalParser) Parse(src *reader) (interface{}, error) {
 	val, err := o.Parser.Parse(src)
 	if err == nil {
 		o.read = true
@@ -525,13 +525,13 @@ func (o *Optional) Parse(src *reader) (interface{}, error) {
 	return nil, nil
 }
 
-func (o *Optional) Unread(src *reader) {
+func (o *optionalParser) Unread(src *reader) {
 	if o.read {
 		o.Parser.Unread(src)
 		o.read = false
 	}
 }
 
-func (o *Optional) Clone() Parser {
-	return &Optional{Parser: o.Parser.Clone()}
+func (o *optionalParser) Clone() Parser {
+	return &optionalParser{Parser: o.Parser.Clone()}
 }

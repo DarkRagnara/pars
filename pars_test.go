@@ -20,19 +20,19 @@ func TestParseFromReaderFunc(t *testing.T) {
 func TestParseRune(t *testing.T) {
 	r := stringReader("abc")
 
-	aParser := AnyRune{}
+	aParser := NewAnyRune()
 	a, aErr := aParser.Parse(r)
 	assertParse(t, a.(rune), aErr, 'a', nil)
 
-	bParser := AnyRune{}
+	bParser := NewAnyRune()
 	b, bErr := bParser.Parse(r)
 	assertParse(t, b.(rune), bErr, 'b', nil)
 
-	cParser := AnyRune{}
+	cParser := NewAnyRune()
 	c, cErr := cParser.Parse(r)
 	assertParse(t, c.(rune), cErr, 'c', nil)
 
-	eofParser := AnyRune{}
+	eofParser := NewAnyRune()
 	eof, eofErr := eofParser.Parse(r)
 	assertParse(t, eof, eofErr, nil, io.EOF)
 }
@@ -40,11 +40,11 @@ func TestParseRune(t *testing.T) {
 func TestParseUTFRune(t *testing.T) {
 	r := byteReader([]byte{97, 0xe2, 0x82, 0xac, 99})
 
-	aParser := AnyRune{}
+	aParser := NewAnyRune()
 	a, aErr := aParser.Parse(r)
 	assertParse(t, a.(rune), aErr, 'a', nil)
 
-	bParser := AnyRune{}
+	bParser := NewAnyRune()
 	b, bErr := bParser.Parse(r)
 	assertParse(t, b.(rune), bErr, '€', nil)
 
@@ -52,7 +52,7 @@ func TestParseUTFRune(t *testing.T) {
 	c, cErr := cParser.Parse(r)
 	assertParse(t, c.(rune), cErr, 'c', nil)
 
-	eofParser := AnyRune{}
+	eofParser := NewAnyRune()
 	eof, eofErr := eofParser.Parse(r)
 	assertParse(t, eof, eofErr, nil, io.EOF)
 }
@@ -60,7 +60,7 @@ func TestParseUTFRune(t *testing.T) {
 func TestPartOfRune(t *testing.T) {
 	r := byteReader([]byte{0xe2, 0x82})
 
-	parser := AnyRune{}
+	parser := NewAnyRune()
 	val, err := parser.Parse(r)
 	assertParse(t, val, err, nil, io.EOF)
 
@@ -71,7 +71,7 @@ func TestPartOfRune(t *testing.T) {
 func TestExpectedRune(t *testing.T) {
 	r := byteReader([]byte{0xf5, 0xbf, 0xbf, 0xbf})
 
-	parser := AnyRune{}
+	parser := NewAnyRune()
 	val, err := parser.Parse(r)
 	assertParse(t, val, err, nil, ErrRuneExpected)
 
@@ -82,11 +82,11 @@ func TestExpectedRune(t *testing.T) {
 func TestParseByte(t *testing.T) {
 	r := byteReader([]byte{1, 2, 3})
 
-	parser1 := AnyByte{}
+	parser1 := NewAnyByte()
 	val1, err1 := parser1.Parse(r)
 	assertParse(t, val1.(byte), err1, byte(1), nil)
 
-	parser2 := AnyByte{}
+	parser2 := NewAnyByte()
 	val2, err2 := parser2.Parse(r)
 	assertParse(t, val2.(byte), err2, byte(2), nil)
 
@@ -94,7 +94,7 @@ func TestParseByte(t *testing.T) {
 	val3, err3 := parser3.Parse(r)
 	assertParse(t, val3.(byte), err3, byte(3), nil)
 
-	parserEOF := AnyByte{}
+	parserEOF := NewAnyByte()
 	valEOF, errEOF := parserEOF.Parse(r)
 	assertParse(t, valEOF, errEOF, nil, io.EOF)
 
