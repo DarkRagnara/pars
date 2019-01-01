@@ -10,22 +10,32 @@ import (
 	"unicode/utf8"
 )
 
+//Parser contains the methods that each parser in this framework has to provide.
 type Parser interface {
+	//Parse is used for the actual parsing. It reads from the reader and returns the result or an error value.
+	//Each parser must remember enough from the call to this method to undo the reading in case of a parsing error that occurs later.
+	//Parse must unread all read bytes in case of an error itself so that another parser could try to parse them.
 	Parse(*reader) (interface{}, error)
+	//Unread puts read bytes back to the reader so that they can be read again by other parsers.
 	Unread(*reader)
+	//Clone creates a parser that works the same as the receiver. This allows to create a single parser as a blueprint for other parsers.
+	//Internal state from reading operations should not be cloned.
 	Clone() Parser
 }
 
+//ParseString is a helper function to directly use a parser on a string.
 func ParseString(s string, p Parser) (interface{}, error) {
 	r := newReader(strings.NewReader(s))
 	return p.Parse(r)
 }
 
+//ParseFromReader parses from an io.Reader.
 func ParseFromReader(ior io.Reader, p Parser) (interface{}, error) {
 	r := newReader(ior)
 	return p.Parse(r)
 }
 
+//AnyRune is a parser that parses a single valid rune. If no such rune can be read, ErrRuneExpected is returned.
 type AnyRune struct {
 	buf []byte
 	i   int
@@ -35,9 +45,9 @@ func NewAnyRune() Parser {
 	return &AnyRune{}
 }
 
+//ErrRuneExpected is the error returned from an unsuccessful AnyRune parsing.
 var ErrRuneExpected = fmt.Errorf("Expected rune")
 
-//Parse tries to read a single rune or fails.
 func (r *AnyRune) Parse(src *reader) (interface{}, error) {
 	r.buf = make([]byte, utf8.UTFMax)
 
@@ -79,6 +89,7 @@ func (r *AnyRune) Clone() Parser {
 	return &AnyRune{}
 }
 
+//AnyByte is a parser that reads exactly one byte from the source.
 type AnyByte struct {
 	buf  [1]byte
 	read bool
@@ -111,6 +122,7 @@ func (b *AnyByte) Clone() Parser {
 	return &AnyByte{}
 }
 
+//Char is a parser used to read a single known rune. A different rune is treated as a parsing error.
 type Char struct {
 	expected rune
 	AnyRune
@@ -139,6 +151,7 @@ func (c *Char) Clone() Parser {
 	return NewChar(c.expected)
 }
 
+//CharPred parses a single rune as long as it fulfills the given predicate.
 type CharPred struct {
 	pred func(rune) bool
 	AnyRune
@@ -205,6 +218,7 @@ func (s *Seq) Clone() Parser {
 	return s2
 }
 
+//Some matches a given parser zero or more times. Not matching at all is not an error.
 type Some struct {
 	prototype Parser
 	used      []Parser
@@ -276,6 +290,7 @@ func (o *Or) Clone() Parser {
 	return o2
 }
 
+//String parses a single known string. Different strings are treated as a parsing error.
 type String struct {
 	expected string
 	buf      []byte
@@ -358,6 +373,7 @@ func (e Error) Clone() Parser {
 	return e
 }
 
+//Int parses an integer. The parsed integer is converted via strconv.Atoi.
 type Int struct {
 	parsers []Parser
 }
