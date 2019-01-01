@@ -158,11 +158,18 @@ func (c *charPredParser) Clone() Parser {
 type stringParser struct {
 	expected string
 	buf      []byte
+	silent   bool
 }
+
+var errStringParserSilentError = fmt.Errorf("Could not parse expected string, error silenced.")
 
 //NewString returns a parser for a single known string. Different strings are treated as a parsing error.
 func NewString(expected string) Parser {
 	return &stringParser{expected: expected}
+}
+
+func newSilentString(expected string) Parser {
+	return &stringParser{expected: expected, silent: true}
 }
 
 func (s *stringParser) Parse(src *reader) (val interface{}, err error) {
@@ -174,12 +181,22 @@ func (s *stringParser) Parse(src *reader) (val interface{}, err error) {
 	}
 
 	if n == len(s.buf) {
-		err = fmt.Errorf("Unexpected string \"%v\"", string(s.buf))
+		if s.silent {
+			err = errStringParserSilentError
+		} else {
+			err = fmt.Errorf("Unexpected string \"%v\"", string(s.buf))
+		}
 	}
 
 	src.Unread(s.buf[:n])
 	s.buf = nil
-	return nil, fmt.Errorf("Could not parse expected string \"%v\": %v", s.expected, err)
+
+	if s.silent {
+		err = errStringParserSilentError
+	} else {
+		err = fmt.Errorf("Could not parse expected string \"%v\": %v", s.expected, err)
+	}
+	return nil, err
 }
 
 func (s *stringParser) Unread(src *reader) {
@@ -190,7 +207,7 @@ func (s *stringParser) Unread(src *reader) {
 }
 
 func (s *stringParser) Clone() Parser {
-	return NewString(s.expected)
+	return &stringParser{expected: s.expected, silent: s.silent}
 }
 
 type delimitedStringParser struct {
@@ -199,7 +216,7 @@ type delimitedStringParser struct {
 
 //NewDelimitedString returns a parser that parses a string between two identical delimiter strings and returns the value between.
 func NewDelimitedString(delimiter string) Parser {
-	return &delimitedStringParser{Parser: NewSeq(NewString(delimiter), NewSome(NewExcept(NewAnyRune(), NewString(delimiter))), NewString(delimiter))}
+	return &delimitedStringParser{Parser: NewSeq(NewString(delimiter), NewSome(NewExcept(NewAnyRune(), newSilentString(delimiter))), NewString(delimiter))}
 }
 
 func (d *delimitedStringParser) Parse(src *reader) (interface{}, error) {
