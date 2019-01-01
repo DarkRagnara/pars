@@ -354,6 +354,35 @@ func (s *String) Clone() Parser {
 	return NewString(s.expected)
 }
 
+//DelimitedString parses a string between two identical delimiter strings and returns the value between.
+type DelimitedString struct {
+	Parser
+}
+
+func NewDelimitedString(delimiter string) Parser {
+	return &DelimitedString{Parser: NewSeq(NewString(delimiter), NewSome(NewExcept(NewAnyRune(), NewString(delimiter))), NewString(delimiter))}
+}
+
+func (d *DelimitedString) Parse(src *reader) (interface{}, error) {
+	val, err := d.Parser.Parse(src)
+	if err != nil {
+		return nil, err
+	}
+
+	values := val.([]interface{})
+	runes := values[1].([]interface{})
+
+	builder := strings.Builder{}
+	for _, r := range runes {
+		builder.WriteRune(r.(rune))
+	}
+	return builder.String(), nil
+}
+
+func (d *DelimitedString) Clone() Parser {
+	return &DelimitedString{Parser: d.Parser.Clone()}
+}
+
 //Except wraps a parser so that it fails if a second, excepted parser would succeed.
 type Except struct {
 	Parser

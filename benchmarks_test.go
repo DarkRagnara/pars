@@ -18,6 +18,13 @@ func BenchmarkParseStringString(b *testing.B) {
 	}
 }
 
+func BenchmarkParseDelimitedString(b *testing.B) {
+	helloParser := NewDelimitedString("'")
+	for i := 0; i < b.N; i++ {
+		ParseString("'Hello world'", helloParser)
+	}
+}
+
 func BenchmarkParseInt(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		ParseString("1234567", NewInt())

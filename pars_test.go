@@ -469,6 +469,18 @@ func TestParseOptionalSucceeds(t *testing.T) {
 	assertParseSlice(t, val, err, []interface{}{'-', "12345"}, nil)
 }
 
+func TestParseDelimitedString(t *testing.T) {
+	r := stringReader("'abc'")
+	val, err := NewDelimitedString("'").Parse(r)
+	assertParse(t, val, err, "abc", nil)
+}
+
+func TestParseDelimitedStringMissingEndingDelimiter(t *testing.T) {
+	r := stringReader("'abc")
+	val, err := NewDelimitedString("'").Parse(r)
+	assertParse(t, val, err, nil, fmt.Errorf("Could not find expected sequence item 2: Could not parse expected string \"'\": EOF"))
+}
+
 func TestParseExceptRegular(t *testing.T) {
 	r := stringReader("x")
 	val, err := NewExcept(NewAnyRune(), NewChar('y')).Parse(r)
