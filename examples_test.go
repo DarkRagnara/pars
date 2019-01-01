@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-func ExampleSeq() {
+func ExampleNewSeq() {
 	data := "$123"
 
 	dollarParser := NewSeq(NewChar('$'), NewInt())
@@ -24,7 +24,7 @@ func ExampleSeq() {
 	//123: int
 }
 
-func ExampleOr() {
+func ExampleNewOr() {
 	data := "124"
 
 	parser := NewOr(NewString("123"), NewString("124"))
