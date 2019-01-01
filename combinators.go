@@ -4,6 +4,10 @@ import (
 	"fmt"
 )
 
+type seqParser struct {
+	parsers []Parser
+}
+
 //NewSeq returns a parser that matches all of its given parsers in order or none of them.
 func NewSeq(parsers ...Parser) Parser {
 	return &seqParser{parsers: parsers}
@@ -134,11 +138,6 @@ func (o *orParser) Clone() Parser {
 		o2.parsers[i] = parser.Clone()
 	}
 	return o2
-}
-
-type stringParser struct {
-	expected string
-	buf      []byte
 }
 
 type exceptParser struct {

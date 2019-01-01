@@ -155,8 +155,9 @@ func (c *charPredParser) Clone() Parser {
 	return NewCharPred(c.pred)
 }
 
-type seqParser struct {
-	parsers []Parser
+type stringParser struct {
+	expected string
+	buf      []byte
 }
 
 //NewString returns a parser for a single known string. Different strings are treated as a parsing error.
