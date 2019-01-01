@@ -228,7 +228,7 @@ func NewSome(parser Parser) Parser {
 	return &Some{prototype: parser}
 }
 
-func (s *Some) Parse(src *reader) (val interface{}, err error) {
+func (s *Some) Parse(src *reader) (interface{}, error) {
 	var values []interface{}
 	for {
 		next := s.prototype.Clone()
@@ -252,6 +252,27 @@ func (s *Some) Unread(src *reader) {
 
 func (s *Some) Clone() Parser {
 	return &Some{prototype: s.prototype.Clone()}
+}
+
+//Many matches a given parser one or more times. Not matching at all is an error.
+type Many struct {
+	Parser
+}
+
+func NewMany(parser Parser) Parser {
+	return &Many{Parser: NewSeq(parser, NewSome(parser))}
+}
+
+func (m *Many) Parse(src *reader) (interface{}, error) {
+	val, err := m.Parser.Parse(src)
+	if err != nil {
+		return nil, err
+	}
+
+	results := val.([]interface{})
+	values := append([]interface{}{results[0]}, results[1].([]interface{})...)
+
+	return values, nil
 }
 
 //Or is a parser that matches the first of a given set of parsers. A later parser will not be tried if an earlier match was found.

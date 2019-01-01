@@ -451,3 +451,42 @@ func TestParseSomeUnreadOnError(t *testing.T) {
 	assertValueSlice(t, values[0], []interface{}{'x'})
 	assertValue(t, values[1], 'y')
 }
+
+func TestParseManyEmptyString(t *testing.T) {
+	r := stringReader("")
+	val, err := NewMany(NewAnyRune()).Parse(r)
+
+	assertParse(t, val, err, nil, fmt.Errorf("Could not find expected sequence item 0: EOF"))
+}
+
+func TestParseManyExactlyOneBeforeEOF(t *testing.T) {
+	r := stringReader("x")
+	val, err := NewMany(NewAnyRune()).Parse(r)
+	assertParseSlice(t, val, err, []interface{}{'x'}, nil)
+}
+
+func TestParseManyExactlyOneBeforeMismatch(t *testing.T) {
+	r := stringReader("xy")
+	val, err := NewMany(NewChar('x')).Parse(r)
+	assertParseSlice(t, val, err, []interface{}{'x'}, nil)
+}
+
+func TestParseManyMultipleHits(t *testing.T) {
+	r := stringReader("xxxxy")
+	val, err := NewMany(NewChar('x')).Parse(r)
+	assertParseSlice(t, val, err, []interface{}{'x', 'x', 'x', 'x'}, nil)
+}
+
+func BenchmarkParseSome(b *testing.B) {
+	someRunesParser := NewSome(NewAnyRune())
+	for i := 0; i < b.N; i++ {
+		ParseString("Hello world", someRunesParser)
+	}
+}
+
+func BenchmarkParseMany(b *testing.B) {
+	manyRunesParser := NewMany(NewAnyRune())
+	for i := 0; i < b.N; i++ {
+		ParseString("Hello world", manyRunesParser)
+	}
+}
