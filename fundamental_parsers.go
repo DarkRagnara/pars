@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"math/big"
 	"strconv"
 	"strings"
 	"unicode"
@@ -285,15 +286,69 @@ func (e errorParser) Clone() Parser {
 }
 
 type intParser struct {
-	parsers []Parser
+	Parser
 }
 
 //NewInt returns a parser that parses an integer. The parsed integer is converted via strconv.Atoi.
 func NewInt() Parser {
-	return &intParser{}
+	return &intParser{Parser: newIntegralString()}
 }
 
 func (i *intParser) Parse(src *reader) (interface{}, error) {
+	val, err := i.Parser.Parse(src)
+	if err != nil {
+		return nil, fmt.Errorf("Could not parse int: %v", err)
+	}
+
+	val, err = strconv.Atoi(val.(string))
+	if err != nil {
+		i.Unread(src)
+		return nil, fmt.Errorf("Could not parse int: %v", err)
+	}
+	return val, nil
+}
+
+func (i *intParser) Clone() Parser {
+	return NewInt()
+}
+
+type bigIntParser struct {
+	Parser
+}
+
+//NewBigInt returns a parser that parses an integer. The parsed integer is returned as a math/big.Int.
+func NewBigInt() Parser {
+	return &bigIntParser{Parser: newIntegralString()}
+}
+
+func (i *bigIntParser) Parse(src *reader) (interface{}, error) {
+	val, err := i.Parser.Parse(src)
+	if err != nil {
+		return nil, fmt.Errorf("Could not parse int: %v", err)
+	}
+
+	bigInt := big.NewInt(0)
+	bigInt, ok := bigInt.SetString(val.(string), 10)
+	if ok != true {
+		i.Unread(src)
+		return nil, fmt.Errorf("Could not parse '%v' as int", val.(string))
+	}
+	return bigInt, nil
+}
+
+func (i *bigIntParser) Clone() Parser {
+	return NewBigInt()
+}
+
+type integralStringParser struct {
+	parsers []Parser
+}
+
+func newIntegralString() Parser {
+	return &integralStringParser{}
+}
+
+func (i *integralStringParser) Parse(src *reader) (interface{}, error) {
 	buf := bytes.NewBuffer(nil)
 	var err error
 	for {
@@ -313,24 +368,19 @@ func (i *intParser) Parse(src *reader) (interface{}, error) {
 		i.parsers = append(i.parsers, next)
 	}
 	if buf.Len() > 0 {
-		val, err := strconv.Atoi(buf.String())
-		if err != nil {
-			i.Unread(src)
-			return nil, fmt.Errorf("Could not parse int: %v", err)
-		}
-		return val, nil
+		return buf.String(), nil
 	}
 
-	return nil, fmt.Errorf("Could not parse int: %v", err)
+	return nil, err
 }
 
-func (i *intParser) Unread(src *reader) {
+func (i *integralStringParser) Unread(src *reader) {
 	for j := len(i.parsers) - 1; j >= 0; j-- {
 		i.parsers[j].Unread(src)
 	}
 	i.parsers = nil
 }
 
-func (i *intParser) Clone() Parser {
-	return NewInt()
+func (i *integralStringParser) Clone() Parser {
+	return newIntegralString()
 }

@@ -265,7 +265,7 @@ func TestParseInt(t *testing.T) {
 	assertParse(t, eofVal, eofErr, nil, fmt.Errorf("Could not parse int: Could not parse expected rune: EOF"))
 }
 
-func TestParseIntToHuge(t *testing.T) {
+func TestParseIntTooHuge(t *testing.T) {
 	tooLong := "12345678901234567890123456789012345678901234567890"
 	r := stringReader(tooLong)
 
@@ -297,6 +297,38 @@ func TestParseIntOnlyMinusError(t *testing.T) {
 
 	val, err = NewInt().Parse(r)
 	assertParse(t, val, err, -789, nil)
+}
+
+func TestParseBigInt(t *testing.T) {
+	tooLong := "12345678901234567890123456789012345678901234567890"
+
+	r := stringReader(tooLong)
+
+	val, err := NewBigInt().Parse(r)
+	assertParseBigInt(t, val, err, tooLong, nil)
+}
+
+func TestParseBigIntMisplacedMinus(t *testing.T) {
+	r := stringReader("123-456")
+
+	val, err := NewBigInt().Parse(r)
+	assertParseBigInt(t, val, err, "123", nil)
+
+	val, err = NewBigInt().Parse(r)
+	assertParseBigInt(t, val, err, "-456", nil)
+}
+
+func TestParseBigIntOnlyMinusError(t *testing.T) {
+	r := stringReader("--789")
+
+	val, err := NewBigInt().Parse(r)
+	assertParseBigInt(t, val, err, nil, fmt.Errorf("Could not parse '-' as int"))
+
+	val, err = NewChar('-').Parse(r)
+	assertParse(t, val, err, '-', nil)
+
+	val, err = NewBigInt().Parse(r)
+	assertParseBigInt(t, val, err, "-789", nil)
 }
 
 func TestParseDelimitedString(t *testing.T) {

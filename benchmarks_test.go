@@ -25,6 +25,18 @@ func BenchmarkParseDelimitedString(b *testing.B) {
 	}
 }
 
+func BenchmarkParseBigInt(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		ParseString("1234567", NewBigInt())
+	}
+}
+
+func BenchmarkParseNegativeBigInt(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		ParseString("-1234567", NewBigInt())
+	}
+}
+
 func BenchmarkParseInt(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		ParseString("1234567", NewInt())

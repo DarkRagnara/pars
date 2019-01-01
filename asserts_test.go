@@ -1,6 +1,7 @@
 package pars
 
 import (
+	"math/big"
 	"testing"
 )
 
@@ -78,6 +79,30 @@ func assertValueSlice(t *testing.T, val interface{}, expectedValues []interface{
 	}
 }
 
+func assertValueBigInt(t *testing.T, val interface{}, expectedValStr interface{}) {
+	if expectedValStr == nil {
+		if val != nil {
+			t.Errorf("Expected nil, but got %v (%T)", val, val)
+		}
+		return
+	}
+
+	expectedVal := big.NewInt(0)
+	expectedVal.SetString(expectedValStr.(string), 10)
+
+	var valBigInt *big.Int
+	var ok bool
+
+	if valBigInt, ok = val.(*big.Int); ok != true {
+		t.Errorf("Expected %v (%T), but got %v (%T)", expectedVal, expectedVal, val, val)
+		return
+	}
+
+	if valBigInt.Cmp(expectedVal) != 0 {
+		t.Errorf("Expected %v (%T), but got %v (%T)", expectedVal, expectedVal, val, val)
+	}
+}
+
 func assertParse(t *testing.T, val interface{}, err error, expectedVal interface{}, expectedErr error) {
 	assertValue(t, val, expectedVal)
 	assertError(t, err, expectedErr)
@@ -85,6 +110,11 @@ func assertParse(t *testing.T, val interface{}, err error, expectedVal interface
 
 func assertParseSlice(t *testing.T, val interface{}, err error, expectedValues []interface{}, expectedErr error) {
 	assertValueSlice(t, val, expectedValues)
+	assertError(t, err, expectedErr)
+}
+
+func assertParseBigInt(t *testing.T, val interface{}, err error, expectedVal interface{}, expectedErr error) {
+	assertValueBigInt(t, val, expectedVal)
 	assertError(t, err, expectedErr)
 }
 
