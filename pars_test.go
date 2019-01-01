@@ -490,3 +490,15 @@ func BenchmarkParseMany(b *testing.B) {
 		ParseString("Hello world", manyRunesParser)
 	}
 }
+
+func TestParseOptionalFails(t *testing.T) {
+	r := stringReader("12345")
+	val, err := NewSeq(NewOptional(NewChar('-')), NewString("12345")).Parse(r)
+	assertParseSlice(t, val, err, []interface{}{nil, "12345"}, nil)
+}
+
+func TestParseOptionalSucceeds(t *testing.T) {
+	r := stringReader("-12345")
+	val, err := NewSeq(NewOptional(NewChar('-')), NewString("12345")).Parse(r)
+	assertParseSlice(t, val, err, []interface{}{'-', "12345"}, nil)
+}

@@ -449,3 +449,33 @@ func (i *Int) Unread(src *reader) {
 func (i *Int) Clone() Parser {
 	return NewInt()
 }
+
+//Optional is a parser that reads exactly one result according to a given other parser. If it fails, the error is discarded and nil is returned.
+type Optional struct {
+	read bool
+	Parser
+}
+
+func NewOptional(parser Parser) Parser {
+	return &Optional{Parser: parser}
+}
+
+func (o *Optional) Parse(src *reader) (interface{}, error) {
+	val, err := o.Parser.Parse(src)
+	if err == nil {
+		o.read = true
+		return val, nil
+	}
+	return nil, nil
+}
+
+func (o *Optional) Unread(src *reader) {
+	if o.read {
+		o.Parser.Unread(src)
+		o.read = false
+	}
+}
+
+func (o *Optional) Clone() Parser {
+	return &Optional{Parser: o.Parser.Clone()}
+}
