@@ -468,3 +468,15 @@ func TestParseOptionalSucceeds(t *testing.T) {
 	val, err := NewSeq(NewOptional(NewChar('-')), NewString("12345")).Parse(r)
 	assertParseSlice(t, val, err, []interface{}{'-', "12345"}, nil)
 }
+
+func TestParseExceptRegular(t *testing.T) {
+	r := stringReader("x")
+	val, err := NewExcept(NewAnyRune(), NewChar('y')).Parse(r)
+	assertParse(t, val, err, 'x', nil)
+}
+
+func TestParseExceptException(t *testing.T) {
+	r := stringReader("x")
+	val, err := NewExcept(NewAnyRune(), NewChar('x')).Parse(r)
+	assertParse(t, val, err, nil, ErrExceptionMatched)
+}

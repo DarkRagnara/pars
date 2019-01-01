@@ -354,6 +354,33 @@ func (s *String) Clone() Parser {
 	return NewString(s.expected)
 }
 
+//Except wraps a parser so that it fails if a second, excepted parser would succeed.
+type Except struct {
+	Parser
+	except Parser
+}
+
+//ErrExceptionMatched signals that an Except parser matched its exception.
+var ErrExceptionMatched = fmt.Errorf("Excepted parser matched")
+
+func NewExcept(parser, except Parser) Parser {
+	return &Except{Parser: parser, except: except}
+}
+
+func (e *Except) Parse(src *reader) (val interface{}, err error) {
+	val, err = e.except.Parse(src)
+	if err == nil {
+		e.except.Unread(src)
+		return nil, ErrExceptionMatched
+	}
+	val, err = e.Parser.Parse(src)
+	return
+}
+
+func (e *Except) Clone() Parser {
+	return NewExcept(e.Parser.Clone(), e.except.Clone())
+}
+
 type eof struct{}
 
 //EOF is a parser that never yields a value but that succeeds if and only if the source reached EOF
