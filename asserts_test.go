@@ -47,14 +47,13 @@ func assertError(t *testing.T, err error, expectedErr error) {
 	}
 }
 
-func assertParse(t *testing.T, val interface{}, err error, expectedVal interface{}, expectedErr error) {
+func assertValue(t *testing.T, val interface{}, expectedVal interface{}) {
 	if val != expectedVal {
 		t.Errorf("Expected %v (%T), but got %v (%T)", expectedVal, expectedVal, val, val)
 	}
-	assertError(t, err, expectedErr)
 }
 
-func assertParseSlice(t *testing.T, val interface{}, err error, expectedValues []interface{}, expectedErr error) {
+func assertValueSlice(t *testing.T, val interface{}, expectedValues []interface{}) {
 	var values []interface{}
 	var ok bool
 	if values, ok = val.([]interface{}); ok == false {
@@ -77,7 +76,15 @@ func assertParseSlice(t *testing.T, val interface{}, err error, expectedValues [
 		expectedVal := expectedValues[i]
 		t.Errorf("Missing element at index %v: %v (%T)", i, expectedVal, expectedVal)
 	}
+}
 
+func assertParse(t *testing.T, val interface{}, err error, expectedVal interface{}, expectedErr error) {
+	assertValue(t, val, expectedVal)
+	assertError(t, err, expectedErr)
+}
+
+func assertParseSlice(t *testing.T, val interface{}, err error, expectedValues []interface{}, expectedErr error) {
+	assertValueSlice(t, val, expectedValues)
 	assertError(t, err, expectedErr)
 }
 

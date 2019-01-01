@@ -442,3 +442,12 @@ func TestParseSomeMultipleHits(t *testing.T) {
 	val, err := NewSome(NewChar('x')).Parse(r)
 	assertParseSlice(t, val, err, []interface{}{'x', 'x', 'x', 'x'}, nil)
 }
+
+func TestParseSomeUnreadOnError(t *testing.T) {
+	r := stringReader("xy")
+	val, err := NewSeq(NewSome(NewChar('x')), NewChar('y')).Parse(r)
+	assertError(t, err, nil)
+	values := val.([]interface{})
+	assertValueSlice(t, values[0], []interface{}{'x'})
+	assertValue(t, values[1], 'y')
+}
