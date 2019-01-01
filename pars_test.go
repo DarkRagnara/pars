@@ -418,6 +418,12 @@ func BenchmarkParseInt(b *testing.B) {
 	}
 }
 
+func BenchmarkParseNegativeInt(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		ParseString("-1234567", NewInt())
+	}
+}
+
 func TestParseSomeEmptyString(t *testing.T) {
 	r := stringReader("")
 	val, err := NewSome(NewAnyRune()).Parse(r)
