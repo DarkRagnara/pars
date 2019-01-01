@@ -275,6 +275,10 @@ func (m *Many) Parse(src *reader) (interface{}, error) {
 	return values, nil
 }
 
+func (m *Many) Clone() Parser {
+	return &Many{Parser: m.Parser.Clone()}
+}
+
 //Or is a parser that matches the first of a given set of parsers. A later parser will not be tried if an earlier match was found.
 //Or uses the error message of the last parser verbatim.
 type Or struct {
