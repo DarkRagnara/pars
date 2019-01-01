@@ -277,13 +277,6 @@ func TestParseOrFailed(t *testing.T) {
 	assertBytes(t, r.buf.prepend, []byte{})
 }
 
-func BenchmarkParseStringSeq(b *testing.B) {
-	helloParser := NewSeq(NewChar('H'), NewChar('e'), NewChar('l'), NewChar('l'), NewChar('o'), NewChar(' '), NewChar('w'), NewChar('o'), NewChar('r'), NewChar('l'), NewChar('d'))
-	for i := 0; i < b.N; i++ {
-		ParseString("Hello world", helloParser)
-	}
-}
-
 func TestParseString(t *testing.T) {
 	r := stringReader("abcabc")
 
@@ -320,13 +313,6 @@ func TestParseUnexpectedString(t *testing.T) {
 
 	assertBytes(t, r.buf.current, []byte{})
 	assertBytes(t, r.buf.prepend, []byte{})
-}
-
-func BenchmarkParseStringString(b *testing.B) {
-	helloParser := NewString("Hello world")
-	for i := 0; i < b.N; i++ {
-		ParseString("Hello world", helloParser)
-	}
 }
 
 func TestParseEOF(t *testing.T) {
@@ -412,18 +398,6 @@ func TestParseIntOnlyMinusError(t *testing.T) {
 	assertParse(t, val, err, -789, nil)
 }
 
-func BenchmarkParseInt(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		ParseString("1234567", NewInt())
-	}
-}
-
-func BenchmarkParseNegativeInt(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		ParseString("-1234567", NewInt())
-	}
-}
-
 func TestParseSomeEmptyString(t *testing.T) {
 	r := stringReader("")
 	val, err := NewSome(NewAnyRune()).Parse(r)
@@ -481,20 +455,6 @@ func TestParseManyMultipleHits(t *testing.T) {
 	r := stringReader("xxxxy")
 	val, err := NewMany(NewChar('x')).Parse(r)
 	assertParseSlice(t, val, err, []interface{}{'x', 'x', 'x', 'x'}, nil)
-}
-
-func BenchmarkParseSome(b *testing.B) {
-	someRunesParser := NewSome(NewAnyRune())
-	for i := 0; i < b.N; i++ {
-		ParseString("Hello world", someRunesParser)
-	}
-}
-
-func BenchmarkParseMany(b *testing.B) {
-	manyRunesParser := NewMany(NewAnyRune())
-	for i := 0; i < b.N; i++ {
-		ParseString("Hello world", manyRunesParser)
-	}
 }
 
 func TestParseOptionalFails(t *testing.T) {
