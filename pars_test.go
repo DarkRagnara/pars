@@ -417,3 +417,28 @@ func BenchmarkParseInt(b *testing.B) {
 		ParseString("1234567", NewInt())
 	}
 }
+
+func TestParseSomeEmptyString(t *testing.T) {
+	r := stringReader("")
+	val, err := NewSome(NewAnyRune()).Parse(r)
+
+	assertParseSlice(t, val, err, []interface{}{}, nil)
+}
+
+func TestParseSomeExactlyOneBeforeEOF(t *testing.T) {
+	r := stringReader("x")
+	val, err := NewSome(NewAnyRune()).Parse(r)
+	assertParseSlice(t, val, err, []interface{}{'x'}, nil)
+}
+
+func TestParseSomeExactlyOneBeforeMismatch(t *testing.T) {
+	r := stringReader("xy")
+	val, err := NewSome(NewChar('x')).Parse(r)
+	assertParseSlice(t, val, err, []interface{}{'x'}, nil)
+}
+
+func TestParseSomeMultipleHits(t *testing.T) {
+	r := stringReader("xxxxy")
+	val, err := NewSome(NewChar('x')).Parse(r)
+	assertParseSlice(t, val, err, []interface{}{'x', 'x', 'x', 'x'}, nil)
+}

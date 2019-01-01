@@ -40,15 +40,45 @@ func assertBytes(t *testing.T, buf []byte, expectedBuf []byte) {
 	}
 }
 
-func assertParse(t *testing.T, val interface{}, err error, expectedVal interface{}, expectedErr error) {
-	if val != expectedVal {
-		t.Errorf("Expected %v (%T), but got %v (%T)", expectedVal, expectedVal, val, val)
-	}
-
+func assertError(t *testing.T, err error, expectedErr error) {
 	if err != expectedErr && (err == nil || expectedErr == nil || err.Error() != expectedErr.Error()) {
 		t.Errorf("\nExpected error '%v' (%T),\n"+
 			"       but got '%v' (%T)", expectedErr, expectedErr, err, err)
 	}
+}
+
+func assertParse(t *testing.T, val interface{}, err error, expectedVal interface{}, expectedErr error) {
+	if val != expectedVal {
+		t.Errorf("Expected %v (%T), but got %v (%T)", expectedVal, expectedVal, val, val)
+	}
+	assertError(t, err, expectedErr)
+}
+
+func assertParseSlice(t *testing.T, val interface{}, err error, expectedValues []interface{}, expectedErr error) {
+	var values []interface{}
+	var ok bool
+	if values, ok = val.([]interface{}); ok == false {
+		t.Errorf("Excepcted %v (%T), but got %v (%T)", expectedValues, expectedValues, val, val)
+		return
+	}
+
+	for i, v := range values {
+		if i >= len(expectedValues) {
+			t.Errorf("Index %v: Unexpected element %v (%T)", i, v, v)
+		} else {
+			expectedVal := expectedValues[i]
+			if v != expectedVal {
+				t.Errorf("Index %v: Expected %v (%T), but got %v (%T)", i, expectedVal, expectedVal, v, v)
+			}
+		}
+	}
+
+	for i := len(values); i < len(expectedValues); i++ {
+		expectedVal := expectedValues[i]
+		t.Errorf("Missing element at index %v: %v (%T)", i, expectedVal, expectedVal)
+	}
+
+	assertError(t, err, expectedErr)
 }
 
 func assertRunesInSlice(t *testing.T, vals []interface{}, expected string) {

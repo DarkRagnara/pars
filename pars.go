@@ -205,6 +205,40 @@ func (s *Seq) Clone() Parser {
 	return s2
 }
 
+type Some struct {
+	prototype Parser
+	used      []Parser
+}
+
+func NewSome(parser Parser) Parser {
+	return &Some{prototype: parser}
+}
+
+func (s *Some) Parse(src *reader) (val interface{}, err error) {
+	var values []interface{}
+	for {
+		next := s.prototype.Clone()
+		s.used = append(s.used, next)
+
+		nextVal, nextErr := next.Parse(src)
+		if nextErr != nil {
+			break
+		}
+		values = append(values, nextVal)
+	}
+	return values, nil
+}
+
+func (s *Some) Unread(src *reader) {
+	for i := len(s.used) - 1; i >= 0; i-- {
+		s.used[i].Unread(src)
+	}
+}
+
+func (s *Some) Clone() Parser {
+	return &Some{prototype: s.prototype.Clone()}
+}
+
 //Or is a parser that matches the first of a given set of parsers. A later parser will not be tried if an earlier match was found.
 //Or uses the error message of the last parser verbatim.
 type Or struct {
