@@ -172,7 +172,7 @@ type stringParser struct {
 	silent   bool
 }
 
-var errStringParserSilentError = fmt.Errorf("Could not parse expected string, error silenced.")
+var errStringParserSilentError = fmt.Errorf("Could not parse expected string, error silenced")
 
 //NewString returns a parser for a single known string. Different strings are treated as a parsing error.
 func NewString(expected string) Parser {
