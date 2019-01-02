@@ -92,6 +92,13 @@ func TestParseByte(t *testing.T) {
 	assertBytes(t, r.buf.prepend, []byte{})
 }
 
+func TestParseByteUnread(t *testing.T) {
+	r := stringReader("AB")
+
+	val, err := NewOr(NewSeq(NewAnyByte(), NewChar('C')), NewSeq(NewAnyByte(), NewChar('B'))).Parse(r)
+	assertParseSlice(t, val, err, []interface{}{byte('A'), 'B'}, nil)
+}
+
 func TestParseExpectedChars(t *testing.T) {
 	r := stringReader("aba")
 
@@ -306,6 +313,12 @@ func TestParseBigInt(t *testing.T) {
 
 	val, err := NewBigInt().Parse(r)
 	assertParseBigInt(t, val, err, tooLong, nil)
+}
+
+func TestParseBigIntNoCharRead(t *testing.T) {
+	r := stringReader("X")
+	val, err := NewBigInt().Parse(r)
+	assertParseBigInt(t, val, err, nil, fmt.Errorf("Could not parse int: Could not parse expected rune: Rune 'X' (0x58) does not hold predicate"))
 }
 
 func TestParseBigIntMisplacedMinus(t *testing.T) {

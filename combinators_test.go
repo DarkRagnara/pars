@@ -26,6 +26,14 @@ func TestParseSeq(t *testing.T) {
 	assertBytes(t, r.buf.prepend, []byte{})
 }
 
+func TestParseSeqUnread(t *testing.T) {
+	r := stringReader("abc")
+	seqParser := NewOr(NewSeq(NewSeq(NewChar('a'), NewChar('b')), NewChar('a')), NewString("abc"))
+
+	val1, err1 := seqParser.Parse(r)
+	assertParse(t, val1, err1, "abc", nil)
+}
+
 func TestParseSeqFailed(t *testing.T) {
 	r := stringReader("a€d")
 
@@ -157,6 +165,12 @@ func TestParseOptionalFails(t *testing.T) {
 	r := stringReader("12345")
 	val, err := NewSeq(NewOptional(NewChar('-')), NewString("12345")).Parse(r)
 	assertParseSlice(t, val, err, []interface{}{nil, "12345"}, nil)
+}
+
+func TestParseOptionalUnread(t *testing.T) {
+	r := stringReader("--")
+	val, err := NewOr(NewSeq(NewOptional(NewChar('-')), NewInt()), NewString("--")).Parse(r)
+	assertParse(t, val, err, "--", nil)
 }
 
 func TestParseOptionalSucceeds(t *testing.T) {
