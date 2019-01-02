@@ -250,3 +250,24 @@ func TestParseDiscardRightUnread(t *testing.T) {
 	val, err := NewOr(NewSeq(NewDiscardRight(NewChar('$'), NewInt()), NewError(fmt.Errorf("Forced unread"))), NewString("$15")).Parse(r)
 	assertParse(t, val, err, "$15", nil)
 }
+
+func TestParseSep(t *testing.T) {
+	r := stringReader("1,2,3,4,5")
+	val, err := NewSep(NewInt(), NewChar(',')).Parse(r)
+	assertParseSlice(t, val, err, []interface{}{1, 2, 3, 4, 5}, nil)
+}
+
+func TestParseSepTrailingSeparator(t *testing.T) {
+	r := stringReader("1,2,3,4,5,")
+	val, err := NewSep(NewInt(), NewChar(',')).Parse(r)
+	assertParseSlice(t, val, err, []interface{}{1, 2, 3, 4, 5}, nil)
+
+	val2, err2 := NewChar(',').Parse(r)
+	assertParse(t, val2, err2, ',', nil)
+}
+
+func TestParseSepSingleItem(t *testing.T) {
+	r := stringReader("12345")
+	val, err := NewSep(NewInt(), NewChar(',')).Parse(r)
+	assertParseSlice(t, val, err, []interface{}{12345}, nil)
+}
