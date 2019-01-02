@@ -5,60 +5,69 @@ import (
 )
 
 func BenchmarkParseStringSeq(b *testing.B) {
-	helloParser := NewSeq(NewChar('H'), NewChar('e'), NewChar('l'), NewChar('l'), NewChar('o'), NewChar(' '), NewChar('w'), NewChar('o'), NewChar('r'), NewChar('l'), NewChar('d'))
+	prototype := NewSeq(NewChar('H'), NewChar('e'), NewChar('l'), NewChar('l'), NewChar('o'), NewChar(' '), NewChar('w'), NewChar('o'), NewChar('r'), NewChar('l'), NewChar('d'))
 	for i := 0; i < b.N; i++ {
-		ParseString("Hello world", helloParser)
+		p := prototype.Clone()
+		ParseString("Hello world", p)
 	}
 }
 
 func BenchmarkParseStringString(b *testing.B) {
-	helloParser := NewString("Hello world")
+	prototype := NewString("Hello world")
 	for i := 0; i < b.N; i++ {
-		ParseString("Hello world", helloParser)
+		p := prototype.Clone()
+		ParseString("Hello world", p)
 	}
 }
 
 func BenchmarkParseDelimitedString(b *testing.B) {
-	helloParser := NewDelimitedString("'", "'")
+	prototype := NewDelimitedString("'", "'")
 	for i := 0; i < b.N; i++ {
-		ParseString("'Hello world'", helloParser)
+		p := prototype.Clone()
+		ParseString("Hello world", p)
 	}
 }
 
 func BenchmarkParseBigInt(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		ParseString("1234567", NewBigInt())
+		p := NewBigInt()
+		ParseString("1234567", p)
 	}
 }
 
 func BenchmarkParseNegativeBigInt(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		ParseString("-1234567", NewBigInt())
+		p := NewBigInt()
+		ParseString("-1234567", p)
 	}
 }
 
 func BenchmarkParseInt(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		ParseString("1234567", NewInt())
+		p := NewInt()
+		ParseString("1234567", p)
 	}
 }
 
 func BenchmarkParseNegativeInt(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		ParseString("-1234567", NewInt())
+		p := NewInt()
+		ParseString("-1234567", p)
 	}
 }
 
 func BenchmarkParseSome(b *testing.B) {
-	someRunesParser := NewSome(NewAnyRune())
+	prototype := NewSome(NewAnyRune())
 	for i := 0; i < b.N; i++ {
-		ParseString("Hello world", someRunesParser)
+		p := prototype.Clone()
+		ParseString("Hello world", p)
 	}
 }
 
 func BenchmarkParseMany(b *testing.B) {
-	manyRunesParser := NewMany(NewAnyRune())
+	prototype := NewMany(NewAnyRune())
 	for i := 0; i < b.N; i++ {
-		ParseString("Hello world", manyRunesParser)
+		p := prototype.Clone()
+		ParseString("Hello world", p)
 	}
 }
