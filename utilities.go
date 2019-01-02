@@ -3,6 +3,7 @@ package pars
 import (
 	"log"
 	"os"
+	"unicode"
 )
 
 type loggingParser struct {
@@ -77,4 +78,19 @@ func (t *transformingParser) Unread(src *reader) {
 
 func (t *transformingParser) Clone() Parser {
 	return NewTransformer(t.Parser.Clone(), t.transformer)
+}
+
+//NewSwallowWhitespace wraps a parser so that it removes leading and trailing whitespace.
+func NewSwallowWhitespace(parser Parser) Parser {
+	return NewSwallowLeadingWhitespace(NewSwallowTrailingWhitespace(parser))
+}
+
+//NewSwallowLeadingWhitespace wraps a parser so that it removes leading whitespace.
+func NewSwallowLeadingWhitespace(parser Parser) Parser {
+	return NewDiscardLeft(NewSome(NewCharPred(unicode.IsSpace)), parser)
+}
+
+//NewSwallowTrailingWhitespace wraps a parser so that it removes trailing whitespace.
+func NewSwallowTrailingWhitespace(parser Parser) Parser {
+	return NewDiscardRight(parser, NewSome(NewCharPred(unicode.IsSpace)))
 }

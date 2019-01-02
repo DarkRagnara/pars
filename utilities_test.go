@@ -34,3 +34,21 @@ func TestTransformerUnread(t *testing.T) {
 	val, err = NewString("123").Parse(r)
 	assertParse(t, val, err, "123", nil)
 }
+
+func TestSwallowWhitespace(t *testing.T) {
+	r := stringReader(" 123 ")
+	val, err := NewDiscardRight(NewSwallowWhitespace(NewInt()), EOF).Parse(r)
+	assertParse(t, val, err, 123, nil)
+}
+
+func TestSwallowLeadingWhitespace(t *testing.T) {
+	r := stringReader(" 123 ")
+	val, err := NewDiscardRight(NewSwallowLeadingWhitespace(NewInt()), NewSeq(NewString(" "), EOF)).Parse(r)
+	assertParse(t, val, err, 123, nil)
+}
+
+func TestSwallowTrailingWhitespace(t *testing.T) {
+	r := stringReader(" 123 ")
+	val, err := NewDiscardLeft(NewString(" "), NewDiscardRight(NewSwallowTrailingWhitespace(NewInt()), EOF)).Parse(r)
+	assertParse(t, val, err, 123, nil)
+}
