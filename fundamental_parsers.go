@@ -227,7 +227,7 @@ type delimitedStringParser struct {
 
 //NewDelimitedString returns a parser that parses a string between two given delimiter strings and returns the value between.
 func NewDelimitedString(beginDelimiter, endDelimiter string) Parser {
-	return &delimitedStringParser{Parser: NewSeq(NewString(beginDelimiter), NewSome(NewExcept(NewAnyRune(), newSilentString(endDelimiter))), NewString(endDelimiter))}
+	return &delimitedStringParser{Parser: NewDiscardLeft(NewString(beginDelimiter), NewDiscardRight(NewSome(NewExcept(NewAnyRune(), newSilentString(endDelimiter))), NewString(endDelimiter)))}
 }
 
 func (d *delimitedStringParser) Parse(src *reader) (interface{}, error) {
@@ -236,8 +236,7 @@ func (d *delimitedStringParser) Parse(src *reader) (interface{}, error) {
 		return nil, err
 	}
 
-	values := val.([]interface{})
-	runes := values[1].([]interface{})
+	runes := val.([]interface{})
 
 	builder := strings.Builder{}
 	for _, r := range runes {

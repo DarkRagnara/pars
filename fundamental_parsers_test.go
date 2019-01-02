@@ -359,5 +359,5 @@ func TestParseDelimitedStringDifferentDelimiters(t *testing.T) {
 func TestParseDelimitedStringMissingEndingDelimiter(t *testing.T) {
 	r := stringReader("'abc")
 	val, err := NewDelimitedString("'", "'").Parse(r)
-	assertParse(t, val, err, nil, fmt.Errorf("Could not find expected sequence item 2: Could not parse expected string \"'\": EOF"))
+	assertParse(t, val, err, nil, fmt.Errorf("Could not parse expected string \"'\": EOF"))
 }
