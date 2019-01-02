@@ -285,7 +285,7 @@ func TestRecursiveSimple(t *testing.T) {
 }
 
 func recursiveTestParser() Parser {
-	return NewOr(NewTransformer(NewSeq(NewInt(), NewDiscardLeft(NewChar(';'), NewRecursive(recursiveTestParser))), joinHeadAndTail), NewSeq(NewInt()))
+	return NewOr(NewSplicingSeq(NewInt(), NewDiscardLeft(NewChar(';'), NewRecursive(recursiveTestParser))), NewSeq(NewInt()))
 }
 
 func TestRecursiveReal(t *testing.T) {

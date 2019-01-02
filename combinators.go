@@ -80,7 +80,7 @@ func (s *someParser) Clone() Parser {
 
 //NewMany returns a parser that matches a given parser one or more times. Not matching at all is an error.
 func NewMany(parser Parser) Parser {
-	return NewTransformer(NewSeq(parser, NewSome(parser)), joinHeadAndTail)
+	return NewSplicingSeq(parser, NewSome(parser))
 }
 
 type orParser struct {
@@ -242,15 +242,27 @@ func (d *discardRightParser) Clone() Parser {
 	return NewDiscardRight(d.leftParser.Clone(), d.rightParser.Clone())
 }
 
-//NewSep returns a parser that parses a sequence of items according to a first parser that are separated by matches of a second parser.
-func NewSep(item, separator Parser) Parser {
-	return NewTransformer(NewSeq(item, NewSome(NewDiscardLeft(separator, item))), joinHeadAndTail)
+//NewSplicingSeq returns a parser that works like a Seq but joins slices returned by its subparsers into a single slice.
+func NewSplicingSeq(parsers ...Parser) Parser {
+	return NewTransformer(NewSeq(parsers...), splice)
 }
 
-func joinHeadAndTail(val interface{}) (interface{}, error) {
+func splice(val interface{}) (interface{}, error) {
 	results := val.([]interface{})
-	values := append([]interface{}{results[0]}, results[1].([]interface{})...)
+	values := make([]interface{}, 0, len(results))
+	for _, result := range results {
+		if resultSlice, ok := result.([]interface{}); ok {
+			values = append(values, resultSlice...)
+		} else {
+			values = append(values, result)
+		}
+	}
 	return values, nil
+}
+
+//NewSep returns a parser that parses a sequence of items according to a first parser that are separated by matches of a second parser.
+func NewSep(item, separator Parser) Parser {
+	return NewSplicingSeq(item, NewSome(NewDiscardLeft(separator, item)))
 }
 
 type recursiveParser struct {
