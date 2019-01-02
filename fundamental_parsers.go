@@ -294,59 +294,27 @@ func (e errorParser) Clone() Parser {
 	return e
 }
 
-type intParser struct {
-	Parser
-}
-
 //NewInt returns a parser that parses an integer. The parsed integer is converted via strconv.Atoi.
 func NewInt() Parser {
-	return &intParser{Parser: newIntegralString()}
-}
-
-func (i *intParser) Parse(src *reader) (interface{}, error) {
-	val, err := i.Parser.Parse(src)
-	if err != nil {
-		return nil, fmt.Errorf("Could not parse int: %v", err)
-	}
-
-	val, err = strconv.Atoi(val.(string))
-	if err != nil {
-		i.Unread(src)
-		return nil, fmt.Errorf("Could not parse int: %v", err)
-	}
-	return val, nil
-}
-
-func (i *intParser) Clone() Parser {
-	return NewInt()
-}
-
-type bigIntParser struct {
-	Parser
+	return NewTransformer(newIntegralString(), func(v interface{}) (interface{}, error) {
+		val, err := strconv.Atoi(v.(string))
+		if err != nil {
+			return nil, fmt.Errorf("Could not parse int: %v", err)
+		}
+		return val, nil
+	})
 }
 
 //NewBigInt returns a parser that parses an integer. The parsed integer is returned as a math/big.Int.
 func NewBigInt() Parser {
-	return &bigIntParser{Parser: newIntegralString()}
-}
-
-func (i *bigIntParser) Parse(src *reader) (interface{}, error) {
-	val, err := i.Parser.Parse(src)
-	if err != nil {
-		return nil, fmt.Errorf("Could not parse int: %v", err)
-	}
-
-	bigInt := big.NewInt(0)
-	bigInt, ok := bigInt.SetString(val.(string), 10)
-	if ok != true {
-		i.Unread(src)
-		return nil, fmt.Errorf("Could not parse '%v' as int", val.(string))
-	}
-	return bigInt, nil
-}
-
-func (i *bigIntParser) Clone() Parser {
-	return NewBigInt()
+	return NewTransformer(newIntegralString(), func(v interface{}) (interface{}, error) {
+		bigInt := big.NewInt(0)
+		bigInt, ok := bigInt.SetString(v.(string), 10)
+		if ok != true {
+			return nil, fmt.Errorf("Could not parse '%v' as int", v.(string))
+		}
+		return bigInt, nil
+	})
 }
 
 type integralStringParser struct {
@@ -380,7 +348,7 @@ func (i *integralStringParser) Parse(src *reader) (interface{}, error) {
 		return buf.String(), nil
 	}
 
-	return nil, err
+	return nil, fmt.Errorf("Could not parse int: %v", err)
 }
 
 func (i *integralStringParser) Unread(src *reader) {
