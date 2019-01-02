@@ -130,6 +130,7 @@ func (c *charParser) Clone() Parser {
 type charPredParser struct {
 	pred func(rune) bool
 	anyRuneParser
+	silent bool
 }
 
 //NewCharPred returns a parser that parses a single rune as long as it fulfills the given predicate.
@@ -137,9 +138,18 @@ func NewCharPred(pred func(rune) bool) Parser {
 	return &charPredParser{pred: pred}
 }
 
+func newSilentCharPred(pred func(rune) bool) Parser {
+	return &charPredParser{pred: pred, silent: true}
+}
+
+var errCharPredParserSilentFailedPredicateError = fmt.Errorf("Could not parse expected rune: Rune does not hold predicate")
+
 func (c *charPredParser) Parse(src *reader) (interface{}, error) {
 	val, err := c.anyRuneParser.Parse(src)
 	if err != nil {
+		if c.silent {
+			return nil, err
+		}
 		return nil, fmt.Errorf("Could not parse expected rune: %v", err.Error())
 	}
 	if val, ok := val.(rune); ok {
@@ -147,6 +157,9 @@ func (c *charPredParser) Parse(src *reader) (interface{}, error) {
 			return val, nil
 		}
 		c.anyRuneParser.Unread(src)
+		if c.silent {
+			return nil, errCharPredParserSilentFailedPredicateError
+		}
 		return nil, fmt.Errorf("Could not parse expected rune: Rune '%c' (0x%x) does not hold predicate", val, val)
 	}
 	panic("AnyRune returned type != rune")
@@ -356,7 +369,7 @@ func (i *integralStringParser) Parse(src *reader) (interface{}, error) {
 		if buf.Len() == 0 {
 			next = NewOr(NewChar('-'), NewCharPred(unicode.IsDigit))
 		} else {
-			next = NewCharPred(unicode.IsDigit)
+			next = newSilentCharPred(unicode.IsDigit)
 		}
 		var val interface{}
 		val, err = next.Parse(src)
