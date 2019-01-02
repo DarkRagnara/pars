@@ -196,3 +196,63 @@ func (o *optionalParser) Unread(src *reader) {
 func (o *optionalParser) Clone() Parser {
 	return &optionalParser{Parser: o.Parser.Clone()}
 }
+
+type discardLeftParser struct {
+	leftParser  Parser
+	rightParser Parser
+}
+
+//NewDiscardLeft returns a parser that calls two other parsers but only returns the result of the second parser. Both parsers must succeed.
+func NewDiscardLeft(left, right Parser) Parser {
+	return &discardLeftParser{leftParser: left, rightParser: right}
+}
+
+func (d *discardLeftParser) Parse(src *reader) (interface{}, error) {
+	_, err := d.leftParser.Parse(src)
+	if err != nil {
+		return nil, err
+	}
+	return d.rightParser.Parse(src)
+}
+
+func (d *discardLeftParser) Unread(src *reader) {
+	d.rightParser.Unread(src)
+	d.leftParser.Unread(src)
+}
+
+func (d *discardLeftParser) Clone() Parser {
+	return NewDiscardLeft(d.leftParser.Clone(), d.rightParser.Clone())
+}
+
+type discardRightParser struct {
+	leftParser  Parser
+	rightParser Parser
+}
+
+//NewDiscardRight returns a parser that calls two other parsers but only returns the result of the first parser. Both parsers must succeed.
+func NewDiscardRight(left, right Parser) Parser {
+	return &discardRightParser{leftParser: left, rightParser: right}
+}
+
+func (d *discardRightParser) Parse(src *reader) (interface{}, error) {
+	val, err := d.leftParser.Parse(src)
+	if err != nil {
+		return nil, err
+	}
+	_, err = d.rightParser.Parse(src)
+	if err != nil {
+		d.leftParser.Unread(src)
+		return nil, err
+	}
+
+	return val, nil
+}
+
+func (d *discardRightParser) Unread(src *reader) {
+	d.rightParser.Unread(src)
+	d.leftParser.Unread(src)
+}
+
+func (d *discardRightParser) Clone() Parser {
+	return NewDiscardRight(d.leftParser.Clone(), d.rightParser.Clone())
+}
