@@ -56,6 +56,20 @@ func BenchmarkParseNegativeInt(b *testing.B) {
 	}
 }
 
+func BenchmarkParseAndTransformInt(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		p := NewTransformer(NewInt(), func(v interface{}) (interface{}, error) { return v.(int) + 1, nil })
+		ParseString("1234567", p)
+	}
+}
+
+func BenchmarkParseAndTransformNegativeInt(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		p := NewTransformer(NewInt(), func(v interface{}) (interface{}, error) { return v.(int) + 1, nil })
+		ParseString("-1234567", p)
+	}
+}
+
 func BenchmarkParseSome(b *testing.B) {
 	prototype := NewSome(NewAnyRune())
 	for i := 0; i < b.N; i++ {

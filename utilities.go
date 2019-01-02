@@ -1,6 +1,7 @@
 package pars
 
 import (
+	"fmt"
 	"log"
 	"os"
 )
@@ -40,4 +41,41 @@ func (l *loggingParser) Unread(src *reader) {
 
 func (l *loggingParser) Clone() Parser {
 	return &loggingParser{Parser: l.Parser.Clone(), logger: l.logger}
+}
+
+type transformingParser struct {
+	Parser
+	transformer func(interface{}) (interface{}, error)
+	read        bool
+}
+
+//NewTransformer wraps a parser so that the result is transformed according to the given function. If the transformer returns an error, the parsing is handled as failed.
+func NewTransformer(parser Parser, transformer func(interface{}) (interface{}, error)) Parser {
+	return &transformingParser{Parser: parser, transformer: transformer}
+}
+
+func (t *transformingParser) Parse(src *reader) (interface{}, error) {
+	val, err := t.Parser.Parse(src)
+	if err != nil {
+		return nil, err
+	}
+
+	val, err = t.transformer(val)
+	if err != nil {
+		t.Parser.Unread(src)
+		return nil, fmt.Errorf("Result transformation failed: %v", err)
+	}
+	t.read = true
+	return val, nil
+}
+
+func (t *transformingParser) Unread(src *reader) {
+	if t.read {
+		t.Parser.Unread(src)
+		t.read = false
+	}
+}
+
+func (t *transformingParser) Clone() Parser {
+	return NewTransformer(t.Parser.Clone(), t.transformer)
 }
