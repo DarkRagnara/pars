@@ -215,9 +215,9 @@ type delimitedStringParser struct {
 	Parser
 }
 
-//NewDelimitedString returns a parser that parses a string between two identical delimiter strings and returns the value between.
-func NewDelimitedString(delimiter string) Parser {
-	return &delimitedStringParser{Parser: NewSeq(NewString(delimiter), NewSome(NewExcept(NewAnyRune(), newSilentString(delimiter))), NewString(delimiter))}
+//NewDelimitedString returns a parser that parses a string between two given delimiter strings and returns the value between.
+func NewDelimitedString(beginDelimiter, endDelimiter string) Parser {
+	return &delimitedStringParser{Parser: NewSeq(NewString(beginDelimiter), NewSome(NewExcept(NewAnyRune(), newSilentString(endDelimiter))), NewString(endDelimiter))}
 }
 
 func (d *delimitedStringParser) Parse(src *reader) (interface{}, error) {

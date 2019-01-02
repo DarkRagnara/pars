@@ -346,12 +346,18 @@ func TestParseBigIntOnlyMinusError(t *testing.T) {
 
 func TestParseDelimitedString(t *testing.T) {
 	r := stringReader("'abc'")
-	val, err := NewDelimitedString("'").Parse(r)
+	val, err := NewDelimitedString("'", "'").Parse(r)
 	assertParse(t, val, err, "abc", nil)
+}
+
+func TestParseDelimitedStringDifferentDelimiters(t *testing.T) {
+	r := stringReader("[abc[]")
+	val, err := NewDelimitedString("[", "]").Parse(r)
+	assertParse(t, val, err, "abc[", nil)
 }
 
 func TestParseDelimitedStringMissingEndingDelimiter(t *testing.T) {
 	r := stringReader("'abc")
-	val, err := NewDelimitedString("'").Parse(r)
+	val, err := NewDelimitedString("'", "'").Parse(r)
 	assertParse(t, val, err, nil, fmt.Errorf("Could not find expected sequence item 2: Could not parse expected string \"'\": EOF"))
 }
