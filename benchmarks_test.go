@@ -71,3 +71,11 @@ func BenchmarkParseMany(b *testing.B) {
 		ParseString("Hello world", p)
 	}
 }
+
+func BenchmarkQuotedCSVStrings(b *testing.B) {
+	prototype := NewSep(NewDelimitedString("\"", "\""), NewChar(','))
+	for i := 0; i < b.N; i++ {
+		p := prototype.Clone()
+		ParseString(`"abc","def","ghi"`, p)
+	}
+}
