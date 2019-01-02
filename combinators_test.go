@@ -284,6 +284,12 @@ func TestRecursiveSimple(t *testing.T) {
 	assertParse(t, val, err, "abc", nil)
 }
 
+func TestRecursiveSimpleFail(t *testing.T) {
+	r := stringReader("abc")
+	val, err := NewRecursive(func() Parser { return NewError(fmt.Errorf("Forced failure")) }).Parse(r)
+	assertParse(t, val, err, nil, fmt.Errorf("Forced failure"))
+}
+
 func recursiveTestParser() Parser {
 	return NewOr(NewSplicingSeq(NewInt(), NewDiscardLeft(NewChar(';'), NewRecursive(recursiveTestParser))), NewSeq(NewInt()))
 }
