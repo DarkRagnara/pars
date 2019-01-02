@@ -178,7 +178,7 @@ func (s *stringParser) Parse(src *reader) (val interface{}, err error) {
 	n, err := src.Read(s.buf)
 
 	if n == len(s.buf) && string(s.buf) == s.expected {
-		return string(s.buf), nil
+		return s.expected, nil
 	}
 
 	if n == len(s.buf) {
