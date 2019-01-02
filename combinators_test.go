@@ -271,3 +271,9 @@ func TestParseSepSingleItem(t *testing.T) {
 	val, err := NewSep(NewInt(), NewChar(',')).Parse(r)
 	assertParseSlice(t, val, err, []interface{}{12345}, nil)
 }
+
+func TestParseSepFail(t *testing.T) {
+	r := stringReader("a,b,c")
+	val, err := NewSep(NewInt(), NewChar(',')).Parse(r)
+	assertParse(t, val, err, nil, fmt.Errorf("Could not find expected sequence item 0: Could not parse int: Could not parse expected rune: Rune 'a' (0x61) does not hold predicate"))
+}
