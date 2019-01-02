@@ -78,29 +78,9 @@ func (s *someParser) Clone() Parser {
 	return &someParser{prototype: s.prototype.Clone()}
 }
 
-type manyParser struct {
-	Parser
-}
-
 //NewMany returns a parser that matches a given parser one or more times. Not matching at all is an error.
 func NewMany(parser Parser) Parser {
-	return &manyParser{Parser: NewSeq(parser, NewSome(parser))}
-}
-
-func (m *manyParser) Parse(src *reader) (interface{}, error) {
-	val, err := m.Parser.Parse(src)
-	if err != nil {
-		return nil, err
-	}
-
-	results := val.([]interface{})
-	values := append([]interface{}{results[0]}, results[1].([]interface{})...)
-
-	return values, nil
-}
-
-func (m *manyParser) Clone() Parser {
-	return &manyParser{Parser: m.Parser.Clone()}
+	return NewTransformer(NewSeq(parser, NewSome(parser)), joinHeadAndTail)
 }
 
 type orParser struct {
@@ -262,27 +242,13 @@ func (d *discardRightParser) Clone() Parser {
 	return NewDiscardRight(d.leftParser.Clone(), d.rightParser.Clone())
 }
 
-type sepParser struct {
-	Parser
-}
-
 //NewSep returns a parser that parses a sequence of items according to a first parser that are separated by matches of a second parser.
 func NewSep(item, separator Parser) Parser {
-	return &sepParser{Parser: NewSeq(item, NewSome(NewDiscardLeft(separator, item)))}
+	return NewTransformer(NewSeq(item, NewSome(NewDiscardLeft(separator, item))), joinHeadAndTail)
 }
 
-func (s *sepParser) Parse(src *reader) (interface{}, error) {
-	val, err := s.Parser.Parse(src)
-	if err != nil {
-		return nil, err
-	}
-
+func joinHeadAndTail(val interface{}) (interface{}, error) {
 	results := val.([]interface{})
 	values := append([]interface{}{results[0]}, results[1].([]interface{})...)
-
 	return values, nil
-}
-
-func (s *sepParser) Clone() Parser {
-	return &sepParser{Parser: s.Parser.Clone()}
 }
