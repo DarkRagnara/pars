@@ -15,7 +15,7 @@ func TestFailingTransformer(t *testing.T) {
 	r := stringReader("123")
 	expectedErr := fmt.Errorf("Some transformer error")
 	val, err := NewTransformer(NewInt(), func(v interface{}) (interface{}, error) { return nil, expectedErr }).Parse(r)
-	assertParse(t, val, err, nil, fmt.Errorf("Result transformation failed: %v", expectedErr))
+	assertParse(t, val, err, nil, expectedErr)
 
 	expectedErr = fmt.Errorf("Some parser error")
 	val, err = NewTransformer(NewDiscardRight(NewInt(), NewError(expectedErr)), func(v interface{}) (interface{}, error) { return v, nil }).Parse(r)

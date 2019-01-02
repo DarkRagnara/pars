@@ -1,7 +1,6 @@
 package pars
 
 import (
-	"fmt"
 	"log"
 	"os"
 )
@@ -63,7 +62,7 @@ func (t *transformingParser) Parse(src *reader) (interface{}, error) {
 	val, err = t.transformer(val)
 	if err != nil {
 		t.Parser.Unread(src)
-		return nil, fmt.Errorf("Result transformation failed: %v", err)
+		return nil, err
 	}
 	t.read = true
 	return val, nil
