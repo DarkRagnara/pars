@@ -4,6 +4,23 @@ import (
 	"fmt"
 )
 
+func ExampleNewDiscardLeft() {
+	data := "$123"
+
+	dollarParser := NewDiscardLeft(NewChar('$'), NewInt())
+
+	result, err := ParseString(data, dollarParser)
+	if err != nil {
+		fmt.Println("Error while parsing:", err)
+		return
+	}
+
+	fmt.Printf("%v: %T\n", result, result)
+
+	//Output:
+	//123: int
+}
+
 func ExampleNewSeq() {
 	data := "$123"
 
