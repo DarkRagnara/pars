@@ -212,7 +212,12 @@ func (d *discardLeftParser) Parse(src *reader) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	return d.rightParser.Parse(src)
+	val, err := d.rightParser.Parse(src)
+	if err != nil {
+		d.leftParser.Unread(src)
+		return nil, err
+	}
+	return val, err
 }
 
 func (d *discardLeftParser) Unread(src *reader) {

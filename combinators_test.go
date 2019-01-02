@@ -201,12 +201,18 @@ func TestParseDiscardLeftLeftFailed(t *testing.T) {
 	r := stringReader("$15")
 	val, err := NewDiscardLeft(NewChar('€'), NewInt()).Parse(r)
 	assertParse(t, val, err, nil, fmt.Errorf("Could not parse expected rune '€' (0x20ac): Unexpected rune '$' (0x24)"))
+
+	val, err = NewDiscardLeft(NewChar('$'), NewInt()).Parse(r)
+	assertParse(t, val, err, 15, nil)
 }
 
 func TestParseDiscardLeftRightFailed(t *testing.T) {
 	r := stringReader("$15")
 	val, err := NewDiscardLeft(NewChar('$'), NewChar('0')).Parse(r)
 	assertParse(t, val, err, nil, fmt.Errorf("Could not parse expected rune '0' (0x30): Unexpected rune '1' (0x31)"))
+
+	val, err = NewDiscardLeft(NewChar('$'), NewInt()).Parse(r)
+	assertParse(t, val, err, 15, nil)
 }
 
 func TestParseDiscardLeftUnread(t *testing.T) {
@@ -225,12 +231,18 @@ func TestParseDiscardRightLeftFailed(t *testing.T) {
 	r := stringReader("$15")
 	val, err := NewDiscardRight(NewChar('€'), NewInt()).Parse(r)
 	assertParse(t, val, err, nil, fmt.Errorf("Could not parse expected rune '€' (0x20ac): Unexpected rune '$' (0x24)"))
+
+	val, err = NewDiscardRight(NewChar('$'), NewInt()).Parse(r)
+	assertParse(t, val, err, '$', nil)
 }
 
 func TestParseDiscardRightRightFailed(t *testing.T) {
 	r := stringReader("$15")
 	val, err := NewDiscardRight(NewChar('$'), NewChar('0')).Parse(r)
 	assertParse(t, val, err, nil, fmt.Errorf("Could not parse expected rune '0' (0x30): Unexpected rune '1' (0x31)"))
+
+	val, err = NewDiscardRight(NewChar('$'), NewInt()).Parse(r)
+	assertParse(t, val, err, '$', nil)
 }
 
 func TestParseDiscardRightUnread(t *testing.T) {
