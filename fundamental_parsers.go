@@ -12,21 +12,19 @@ import (
 )
 
 type anyRuneParser struct {
-	buf []byte
+	buf [utf8.UTFMax]byte
 	i   int
 }
 
 //NewAnyRune returns a parser that parses a single valid rune. If no such rune can be read, ErrRuneExpected is returned.
 func NewAnyRune() Parser {
-	return &anyRuneParser{}
+	return &anyRuneParser{i: -1}
 }
 
 //ErrRuneExpected is the error returned from an unsuccessful parsing of a parser returned by NewAnyRune.
 var ErrRuneExpected = fmt.Errorf("Expected rune")
 
 func (r *anyRuneParser) Parse(src *reader) (interface{}, error) {
-	r.buf = make([]byte, utf8.UTFMax)
-
 	r.i = 0
 	for ; r.i < len(r.buf); r.i++ {
 		_, err := src.Read(r.buf[r.i : r.i+1])
@@ -54,10 +52,9 @@ func (r *anyRuneParser) Parse(src *reader) (interface{}, error) {
 }
 
 func (r *anyRuneParser) Unread(src *reader) {
-	if r.i >= 0 && r.buf != nil {
+	if r.i >= 0 {
 		src.Unread(r.buf[:r.i+1])
-		r.buf = nil
-		r.i = 0
+		r.i = -1
 	}
 }
 
