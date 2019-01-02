@@ -277,3 +277,30 @@ func TestParseSepFail(t *testing.T) {
 	val, err := NewSep(NewInt(), NewChar(',')).Parse(r)
 	assertParse(t, val, err, nil, fmt.Errorf("Could not find expected sequence item 0: Could not parse int: Could not parse expected rune: Rune 'a' (0x61) does not hold predicate"))
 }
+
+func TestRecursiveSimple(t *testing.T) {
+	r := stringReader("abc")
+	val, err := NewRecursive(func() Parser { return NewString("abc") }).Parse(r)
+	assertParse(t, val, err, "abc", nil)
+}
+
+func recursiveTestParser() Parser {
+	return NewOr(NewTransformer(NewSeq(NewInt(), NewDiscardLeft(NewChar(';'), NewRecursive(recursiveTestParser))), joinHeadAndTail), NewSeq(NewInt()))
+}
+
+func TestRecursiveReal(t *testing.T) {
+	r := stringReader("123")
+	p := recursiveTestParser()
+	val, err := p.Clone().Parse(r)
+	assertParseSlice(t, val, err, []interface{}{123}, nil)
+
+	r = stringReader("123;234;345")
+	val, err = p.Clone().Parse(r)
+	assertParseSlice(t, val, err, []interface{}{123, 234, 345}, nil)
+}
+
+func TestRecursiveUnread(t *testing.T) {
+	r := stringReader("123;456;789")
+	val, err := NewOr(NewSeq(recursiveTestParser(), NewError(fmt.Errorf("Forced unread"))), NewString("123;456;789")).Parse(r)
+	assertParse(t, val, err, "123;456;789", nil)
+}

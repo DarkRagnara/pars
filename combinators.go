@@ -252,3 +252,35 @@ func joinHeadAndTail(val interface{}) (interface{}, error) {
 	values := append([]interface{}{results[0]}, results[1].([]interface{})...)
 	return values, nil
 }
+
+type recursiveParser struct {
+	parser  Parser
+	factory func() Parser
+}
+
+//NewRecursive allows to recursively define a parser in terms of itself.
+func NewRecursive(factory func() Parser) Parser {
+	return &recursiveParser{factory: factory}
+}
+
+func (r *recursiveParser) Parse(src *reader) (interface{}, error) {
+	r.parser = r.factory()
+	val, err := r.parser.Parse(src)
+	if err != nil {
+		r.parser.Unread(src)
+		return nil, err
+	}
+
+	return val, nil
+}
+
+func (r *recursiveParser) Unread(src *reader) {
+	if r.parser != nil {
+		r.parser.Unread(src)
+		r.parser = nil
+	}
+}
+
+func (r *recursiveParser) Clone() Parser {
+	return NewRecursive(r.factory)
+}
