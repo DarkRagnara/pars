@@ -7,13 +7,14 @@ import (
 type reader struct {
 	r          io.Reader
 	buf        buffer
-	bufBackend []byte
+	bufBackend [256]byte
 	lastErr    error
 }
 
 func newReader(r io.Reader) *reader {
-	bufBackend := make([]byte, 256)
-	return &reader{r: r, bufBackend: bufBackend, buf: buffer{current: bufBackend[0:0]}}
+	reader := &reader{r: r}
+	reader.buf.current = reader.bufBackend[0:0]
+	return reader
 }
 
 var _ io.Reader = &reader{}
@@ -30,7 +31,7 @@ func (br *reader) Read(p []byte) (n int, err error) {
 
 	p = p[n:]
 
-	m, lastErr := br.r.Read(br.bufBackend)
+	m, lastErr := br.r.Read(br.bufBackend[:])
 	br.lastErr = lastErr
 	br.buf.current = br.bufBackend[:m]
 
