@@ -2,4 +2,4 @@
 
 # pars - Simple parser combinators for Go
 
-
+For documentation please read the godoc.

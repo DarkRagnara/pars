@@ -1,3 +1,6 @@
+//pars-calc is a small cli calculator that takes floats or calculations of floats consisting of additions, substractions, multiplications or divisions
+//on StdIn, parses them via the parser implemented in parser.go into something easily evaluable, and prints the result of the calculation.
+//The parser is build to respect normal operator precedence: 1+2*3 is parsed as 1+(2*3) as one would expect.
 package main
 
 import (
