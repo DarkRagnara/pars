@@ -221,13 +221,18 @@ func (s *stringParser) Clone() Parser {
 	return &stringParser{expected: s.expected, silent: s.silent}
 }
 
+//NewRunesUntil returns a parser that parses runes as long as the given endCondition parser does not match.
+func NewRunesUntil(endCondition Parser) Parser {
+	return NewSome(NewExcept(NewAnyRune(), endCondition))
+}
+
 type delimitedStringParser struct {
 	Parser
 }
 
 //NewDelimitedString returns a parser that parses a string between two given delimiter strings and returns the value between.
 func NewDelimitedString(beginDelimiter, endDelimiter string) Parser {
-	return &delimitedStringParser{Parser: NewDiscardLeft(NewString(beginDelimiter), NewDiscardRight(NewSome(NewExcept(NewAnyRune(), newSilentString(endDelimiter))), NewString(endDelimiter)))}
+	return &delimitedStringParser{Parser: NewDiscardLeft(NewString(beginDelimiter), NewDiscardRight(NewRunesUntil(newSilentString(endDelimiter)), NewString(endDelimiter)))}
 }
 
 func (d *delimitedStringParser) Parse(src *reader) (interface{}, error) {
