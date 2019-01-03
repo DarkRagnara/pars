@@ -298,6 +298,17 @@ func NewBigInt() Parser {
 	})
 }
 
+//NewFloat returns a parser that parses a floating point number. The supported format is an optional minus sign followed by digits optionally followed by a decimal point and more digits.
+func NewFloat() Parser {
+	return NewTransformer(newFloatNumberString(), func(v interface{}) (interface{}, error) {
+		val, err := strconv.ParseFloat(v.(string), 64)
+		if err != nil {
+			return nil, fmt.Errorf("Could not parse float: %v", err)
+		}
+		return val, nil
+	})
+}
+
 type integralStringParser struct {
 	parsers []Parser
 }
@@ -341,4 +352,56 @@ func (i *integralStringParser) Unread(src *reader) {
 
 func (i *integralStringParser) Clone() Parser {
 	return newIntegralString()
+}
+
+type floatNumberStringParser struct {
+	parsers []Parser
+}
+
+func newFloatNumberString() Parser {
+	return &floatNumberStringParser{}
+}
+
+func (i *floatNumberStringParser) Parse(src *reader) (interface{}, error) {
+	buf := bytes.NewBuffer(nil)
+	var err error
+	var foundDecimalPoint bool
+	decimalPointParser := NewTransformer(NewChar('.'), func(decimalPoint interface{}) (interface{}, error) {
+		foundDecimalPoint = true
+		return decimalPoint, nil
+	})
+	for {
+		var next Parser
+		if buf.Len() == 0 {
+			next = NewOr(NewChar('-'), NewCharPred(unicode.IsDigit))
+		} else if !foundDecimalPoint {
+			next = NewOr(newSilentCharPred(unicode.IsDigit), decimalPointParser)
+		} else {
+			next = newSilentCharPred(unicode.IsDigit)
+		}
+		var val interface{}
+		val, err = next.Parse(src)
+		if err != nil {
+			next.Unread(src)
+			break
+		}
+		buf.WriteRune(val.(rune))
+		i.parsers = append(i.parsers, next)
+	}
+	if buf.Len() > 0 {
+		return buf.String(), nil
+	}
+
+	return nil, fmt.Errorf("Could not parse float: %v", err)
+}
+
+func (i *floatNumberStringParser) Unread(src *reader) {
+	for j := len(i.parsers) - 1; j >= 0; j-- {
+		i.parsers[j].Unread(src)
+	}
+	i.parsers = nil
+}
+
+func (i *floatNumberStringParser) Clone() Parser {
+	return newFloatNumberString()
 }

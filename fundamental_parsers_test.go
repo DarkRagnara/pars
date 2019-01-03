@@ -361,3 +361,48 @@ func TestParseDelimitedStringMissingEndingDelimiter(t *testing.T) {
 	val, err := NewDelimitedString("'", "'").Parse(r)
 	assertParse(t, val, err, nil, fmt.Errorf("Could not parse expected string \"'\": EOF"))
 }
+
+func TestParseFloat(t *testing.T) {
+	r := stringReader("1.23")
+	val, err := NewFloat().Parse(r)
+	assertParse(t, val, err, 1.23, nil)
+}
+
+func TestParseFloatNegative(t *testing.T) {
+	r := stringReader("-1.23")
+	val, err := NewFloat().Parse(r)
+	assertParse(t, val, err, -1.23, nil)
+}
+
+func TestParseFloatPointless(t *testing.T) {
+	r := stringReader("123")
+	val, err := NewFloat().Parse(r)
+	assertParse(t, val, err, 123.0, nil)
+}
+
+func TestParseFloatSecondDecimalPoint(t *testing.T) {
+	r := stringReader("1.2.3")
+	val, err := NewFloat().Parse(r)
+	assertParse(t, val, err, 1.2, nil)
+
+	val2, err2 := NewDiscardLeft(NewChar('.'), NewFloat()).Parse(r)
+	assertParse(t, val2, err2, 3.0, nil)
+}
+
+func TestParseFloatFailsEmptyString(t *testing.T) {
+	r := stringReader("")
+	val, err := NewFloat().Parse(r)
+	assertParse(t, val, err, nil, fmt.Errorf("Could not parse float: Could not parse expected rune: EOF"))
+}
+
+func TestParseFloatFails(t *testing.T) {
+	r := stringReader("-.")
+	val, err := NewFloat().Parse(r)
+	assertParse(t, val, err, nil, fmt.Errorf("Could not parse float: strconv.ParseFloat: parsing \"-.\": invalid syntax"))
+}
+
+func TestParseFloatUnread(t *testing.T) {
+	r := stringReader("-1.23a")
+	val, err := NewOr(NewSeq(NewFloat(), NewChar('b')), NewString("-1.23a")).Parse(r)
+	assertParse(t, val, err, "-1.23a", nil)
+}

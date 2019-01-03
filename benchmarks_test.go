@@ -56,6 +56,20 @@ func BenchmarkParseNegativeInt(b *testing.B) {
 	}
 }
 
+func BenchmarkParseFloat(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		p := NewFloat()
+		ParseString("123.4567", p)
+	}
+}
+
+func BenchmarkParseNegativeFloat(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		p := NewFloat()
+		ParseString("-123.4567", p)
+	}
+}
+
 func BenchmarkParseAndTransformInt(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		p := NewTransformer(NewInt(), func(v interface{}) (interface{}, error) { return v.(int) + 1, nil })
