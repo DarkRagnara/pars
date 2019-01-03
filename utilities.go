@@ -3,6 +3,7 @@ package pars
 import (
 	"log"
 	"os"
+	"strings"
 	"unicode"
 )
 
@@ -93,4 +94,20 @@ func NewSwallowLeadingWhitespace(parser Parser) Parser {
 //NewSwallowTrailingWhitespace wraps a parser so that it removes trailing whitespace.
 func NewSwallowTrailingWhitespace(parser Parser) Parser {
 	return NewDiscardRight(parser, NewSome(NewCharPred(unicode.IsSpace)))
+}
+
+//NewRunesToString wraps a parser that returns a slice of runes so that it returns a string instead.
+//The returned parser WILL PANIC if the wrapped parser returns something that is not a slice of runes!
+func NewRunesToString(parser Parser) Parser {
+	return NewTransformer(parser, joinRunesToString)
+}
+
+func joinRunesToString(val interface{}) (interface{}, error) {
+	runes := val.([]interface{})
+
+	builder := strings.Builder{}
+	for _, r := range runes {
+		builder.WriteRune(r.(rune))
+	}
+	return builder.String(), nil
 }

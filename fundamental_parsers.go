@@ -6,7 +6,6 @@ import (
 	"io"
 	"math/big"
 	"strconv"
-	"strings"
 	"unicode"
 	"unicode/utf8"
 )
@@ -226,32 +225,9 @@ func NewRunesUntil(endCondition Parser) Parser {
 	return NewSome(NewExcept(NewAnyRune(), endCondition))
 }
 
-type delimitedStringParser struct {
-	Parser
-}
-
 //NewDelimitedString returns a parser that parses a string between two given delimiter strings and returns the value between.
 func NewDelimitedString(beginDelimiter, endDelimiter string) Parser {
-	return &delimitedStringParser{Parser: NewDiscardLeft(NewString(beginDelimiter), NewDiscardRight(NewRunesUntil(newSilentString(endDelimiter)), NewString(endDelimiter)))}
-}
-
-func (d *delimitedStringParser) Parse(src *reader) (interface{}, error) {
-	val, err := d.Parser.Parse(src)
-	if err != nil {
-		return nil, err
-	}
-
-	runes := val.([]interface{})
-
-	builder := strings.Builder{}
-	for _, r := range runes {
-		builder.WriteRune(r.(rune))
-	}
-	return builder.String(), nil
-}
-
-func (d *delimitedStringParser) Clone() Parser {
-	return &delimitedStringParser{Parser: d.Parser.Clone()}
+	return NewRunesToString(NewDiscardLeft(NewString(beginDelimiter), NewDiscardRight(NewRunesUntil(newSilentString(endDelimiter)), NewString(endDelimiter))))
 }
 
 type eof struct{}
