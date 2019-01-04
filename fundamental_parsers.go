@@ -175,12 +175,13 @@ func (s *stringParser) Parse(src *reader) (val interface{}, err error) {
 	s.buf = make([]byte, len(s.expected))
 	n, err := src.Read(s.buf)
 
-	if n == len(s.buf) && string(s.buf) == s.expected {
+	actual := string(s.buf)
+	if n == len(s.buf) && actual == s.expected {
 		return s.expected, nil
 	}
 
 	if n == len(s.buf) {
-		err = unexpectedStringError{expected: s.expected, actual: string(s.buf)}
+		err = unexpectedStringError{expected: s.expected, actual: actual}
 	}
 
 	src.Unread(s.buf[:n])
@@ -199,6 +200,47 @@ func (s *stringParser) Unread(src *reader) {
 
 func (s *stringParser) Clone() Parser {
 	return &stringParser{expected: s.expected}
+}
+
+type stringCIParser struct {
+	expected string
+	buf      []byte
+}
+
+//NewStringCI returns a case-insensitive parser for a single known string. Different strings are treated as a parsing error.
+func NewStringCI(expected string) Parser {
+	return &stringCIParser{expected: expected}
+}
+
+func (s *stringCIParser) Parse(src *reader) (val interface{}, err error) {
+	s.buf = make([]byte, len(s.expected))
+	n, err := src.Read(s.buf)
+
+	actual := string(s.buf)
+	if n == len(s.buf) && strings.EqualFold(actual, s.expected) {
+		return actual, nil
+	}
+
+	if n == len(s.buf) {
+		err = unexpectedStringError{expected: s.expected, actual: actual}
+	}
+
+	src.Unread(s.buf[:n])
+	s.buf = nil
+
+	err = stringError{expected: s.expected, innerError: err}
+	return nil, err
+}
+
+func (s *stringCIParser) Unread(src *reader) {
+	if s.buf != nil {
+		src.Unread(s.buf)
+		s.buf = nil
+	}
+}
+
+func (s *stringCIParser) Clone() Parser {
+	return &stringCIParser{expected: s.expected}
 }
 
 //NewRunesUntil returns a parser that parses runes as long as the given endCondition parser does not match.

@@ -12,6 +12,14 @@ func BenchmarkParseStringSeq(b *testing.B) {
 	}
 }
 
+func BenchmarkParseStringStringCI(b *testing.B) {
+	prototype := NewStringCI("Hello world")
+	for i := 0; i < b.N; i++ {
+		p := prototype.Clone()
+		ParseString("Hello world", p)
+	}
+}
+
 func BenchmarkParseStringString(b *testing.B) {
 	prototype := NewString("Hello world")
 	for i := 0; i < b.N; i++ {

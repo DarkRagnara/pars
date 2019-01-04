@@ -223,6 +223,62 @@ func TestParseUnexpectedString(t *testing.T) {
 	assertBytes(t, r.buf.prepend, []byte{})
 }
 
+func TestParseStringWrongCase(t *testing.T) {
+	r := stringReader("ABC")
+	val, err := NewString("abc").Parse(r)
+	assertParse(t, val, err, nil, fmt.Errorf("Could not parse expected string \"abc\": Unexpected string \"ABC\""))
+}
+
+func TestParseStringCI(t *testing.T) {
+	r := stringReader("abcabc")
+
+	abcParser := NewStringCI("abc")
+	abcVal1, abcErr1 := abcParser.Parse(r)
+	assertParse(t, abcVal1, abcErr1, "abc", nil)
+
+	abcParser2 := abcParser.Clone()
+	abcVal2, abcErr2 := abcParser2.Parse(r)
+	assertParse(t, abcVal2, abcErr2, "abc", nil)
+
+	parserEOF := abcParser.Clone()
+	valEOF, errEOF := parserEOF.Parse(r)
+	assertParse(t, valEOF, errEOF, nil, fmt.Errorf("Could not parse expected string \"abc\": EOF"))
+
+	assertBytes(t, r.buf.current, []byte{})
+	assertBytes(t, r.buf.prepend, []byte{})
+}
+
+func TestParseUnexpectedStringCI(t *testing.T) {
+	r := stringReader("abc")
+
+	abdParser := NewStringCI("abd")
+	abdVal, abdErr := abdParser.Parse(r)
+	assertParse(t, abdVal, abdErr, nil, fmt.Errorf("Could not parse expected string \"abd\": Unexpected string \"abc\""))
+
+	abcParser := NewStringCI("abc")
+	abcVal1, abcErr1 := abcParser.Parse(r)
+	assertParse(t, abcVal1, abcErr1, "abc", nil)
+
+	parserEOF := abcParser.Clone()
+	valEOF, errEOF := parserEOF.Parse(r)
+	assertParse(t, valEOF, errEOF, nil, fmt.Errorf("Could not parse expected string \"abc\": EOF"))
+
+	assertBytes(t, r.buf.current, []byte{})
+	assertBytes(t, r.buf.prepend, []byte{})
+}
+
+func TestParseStringCIWrongCase(t *testing.T) {
+	r := stringReader("ABC")
+	val, err := NewStringCI("abc").Parse(r)
+	assertParse(t, val, err, "ABC", nil)
+}
+
+func TestParseStringCIUnread(t *testing.T) {
+	r := stringReader("ABCD")
+	val, err := NewOr(NewDiscardRight(NewStringCI("abc"), EOF), NewDiscardRight(NewString("ABCD"), EOF)).Parse(r)
+	assertParse(t, val, err, "ABCD", nil)
+}
+
 func TestParseEOF(t *testing.T) {
 	r := stringReader("a")
 
