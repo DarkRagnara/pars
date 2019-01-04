@@ -20,6 +20,36 @@ func BenchmarkParseStringString(b *testing.B) {
 	}
 }
 
+func BenchmarkParseAnyRune(b *testing.B) {
+	prototype := NewAnyRune()
+	for i := 0; i < b.N; i++ {
+		p := prototype.Clone()
+		ParseString("Hello world", p)
+	}
+}
+
+func BenchmarkParseAnyByte(b *testing.B) {
+	prototype := NewAnyByte()
+	for i := 0; i < b.N; i++ {
+		p := prototype.Clone()
+		ParseString("Hello world", p)
+	}
+}
+func BenchmarkParseChar(b *testing.B) {
+	prototype := NewChar('H')
+	for i := 0; i < b.N; i++ {
+		p := prototype.Clone()
+		ParseString("Hello world", p)
+	}
+}
+func BenchmarkParseByte(b *testing.B) {
+	prototype := NewByte(byte('H'))
+	for i := 0; i < b.N; i++ {
+		p := prototype.Clone()
+		ParseString("Hello world", p)
+	}
+}
+
 func BenchmarkParseDelimitedString(b *testing.B) {
 	prototype := NewDelimitedString("'", "'")
 	for i := 0; i < b.N; i++ {
