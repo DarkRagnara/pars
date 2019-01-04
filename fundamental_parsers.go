@@ -94,6 +94,19 @@ func (b *anyByteParser) Clone() Parser {
 	return &anyByteParser{}
 }
 
+//NewByte returns a parser used to read a single known byte. A different byte is treated as a parsing error.
+func NewByte(b byte) Parser {
+	return NewTransformer(NewAnyByte(), func(val interface{}) (interface{}, error) {
+		if val, ok := val.(byte); ok {
+			if val == b {
+				return val, nil
+			}
+			return nil, fmt.Errorf("Could not parse expected byte '%v': Unexpected byte '%v'", b, val)
+		}
+		panic("AnyByte returned type != byte")
+	})
+}
+
 type charParser struct {
 	expected rune
 	anyRuneParser

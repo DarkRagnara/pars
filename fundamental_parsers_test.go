@@ -69,7 +69,7 @@ func TestExpectedRune(t *testing.T) {
 	assertBytes(t, r.buf.prepend, []byte{0xf5})
 }
 
-func TestParseByte(t *testing.T) {
+func TestParseAnyByte(t *testing.T) {
 	r := byteReader([]byte{1, 2, 3})
 
 	parser1 := NewAnyByte()
@@ -92,7 +92,7 @@ func TestParseByte(t *testing.T) {
 	assertBytes(t, r.buf.prepend, []byte{})
 }
 
-func TestParseByteUnread(t *testing.T) {
+func TestParseAnyByteUnread(t *testing.T) {
 	r := stringReader("AB")
 
 	val, err := NewOr(NewSeq(NewAnyByte(), NewChar('C')), NewSeq(NewAnyByte(), NewChar('B'))).Parse(r)
@@ -405,4 +405,16 @@ func TestParseFloatUnread(t *testing.T) {
 	r := stringReader("-1.23a")
 	val, err := NewOr(NewSeq(NewFloat(), NewChar('b')), NewString("-1.23a")).Parse(r)
 	assertParse(t, val, err, "-1.23a", nil)
+}
+
+func TestParseByte(t *testing.T) {
+	r := byteReader([]byte{0, 1, 2, 3})
+	val, err := NewByte(0).Parse(r)
+	assertParse(t, val, err, byte(0), nil)
+}
+
+func TestParseByteOtherByte(t *testing.T) {
+	r := byteReader([]byte{0, 1, 2, 3})
+	val, err := NewByte(1).Parse(r)
+	assertParse(t, val, err, nil, fmt.Errorf("Could not parse expected byte '1': Unexpected byte '0'"))
 }
