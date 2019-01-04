@@ -125,8 +125,7 @@ type exceptParser struct {
 	except Parser
 }
 
-//ErrExceptionMatched signals that an parser returned by exceptParser matched its exception.
-var ErrExceptionMatched = fmt.Errorf("Excepted parser matched")
+var errExceptionMatched = fmt.Errorf("Excepted parser matched")
 
 //NewExcept returns a parser that wraps another parser so that it fails if a third, excepted parser would succeed.
 func NewExcept(parser, except Parser) Parser {
@@ -137,7 +136,7 @@ func (e *exceptParser) Parse(src *reader) (val interface{}, err error) {
 	_, err = e.except.Parse(src)
 	if err == nil {
 		e.except.Unread(src)
-		return nil, ErrExceptionMatched
+		return nil, errExceptionMatched
 	}
 	val, err = e.Parser.Parse(src)
 	return

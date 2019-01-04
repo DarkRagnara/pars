@@ -20,8 +20,7 @@ func NewAnyRune() Parser {
 	return &anyRuneParser{i: -1}
 }
 
-//ErrRuneExpected is the error returned from an unsuccessful parsing of a parser returned by NewAnyRune.
-var ErrRuneExpected = fmt.Errorf("Expected rune")
+var errRuneExpected = fmt.Errorf("Expected rune")
 
 func (r *anyRuneParser) Parse(src *reader) (interface{}, error) {
 	r.i = 0
@@ -47,7 +46,7 @@ func (r *anyRuneParser) Parse(src *reader) (interface{}, error) {
 	}
 
 	r.Unread(src)
-	return nil, ErrRuneExpected
+	return nil, errRuneExpected
 }
 
 func (r *anyRuneParser) Unread(src *reader) {

@@ -63,7 +63,7 @@ func TestExpectedRune(t *testing.T) {
 
 	parser := NewAnyRune()
 	val, err := parser.Parse(r)
-	assertParse(t, val, err, nil, ErrRuneExpected)
+	assertParse(t, val, err, nil, errRuneExpected)
 
 	assertBytes(t, r.buf.current, []byte{0xbf, 0xbf, 0xbf})
 	assertBytes(t, r.buf.prepend, []byte{0xf5})

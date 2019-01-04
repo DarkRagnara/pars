@@ -188,7 +188,7 @@ func TestParseExceptRegular(t *testing.T) {
 func TestParseExceptException(t *testing.T) {
 	r := stringReader("x")
 	val, err := NewExcept(NewAnyRune(), NewChar('x')).Parse(r)
-	assertParse(t, val, err, nil, ErrExceptionMatched)
+	assertParse(t, val, err, nil, errExceptionMatched)
 }
 
 func TestParseDiscardLeft(t *testing.T) {
