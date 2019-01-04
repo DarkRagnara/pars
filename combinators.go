@@ -134,7 +134,7 @@ func NewExcept(parser, except Parser) Parser {
 }
 
 func (e *exceptParser) Parse(src *reader) (val interface{}, err error) {
-	val, err = e.except.Parse(src)
+	_, err = e.except.Parse(src)
 	if err == nil {
 		e.except.Unread(src)
 		return nil, ErrExceptionMatched
