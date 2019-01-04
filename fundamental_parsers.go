@@ -172,7 +172,7 @@ func NewString(expected string) Parser {
 }
 
 func (s *stringParser) Parse(src *reader) (val interface{}, err error) {
-	s.buf = make([]byte, len([]byte(s.expected)))
+	s.buf = make([]byte, len(s.expected))
 	n, err := src.Read(s.buf)
 
 	if n == len(s.buf) && string(s.buf) == s.expected {
