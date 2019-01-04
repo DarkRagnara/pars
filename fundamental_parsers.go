@@ -304,7 +304,7 @@ func NewBigInt() Parser {
 	return NewTransformer(newIntegralString(), func(v interface{}) (interface{}, error) {
 		bigInt := big.NewInt(0)
 		bigInt, ok := bigInt.SetString(v.(string), 10)
-		if ok != true {
+		if !ok {
 			return nil, fmt.Errorf("Could not parse '%v' as int", v.(string))
 		}
 		return bigInt, nil
