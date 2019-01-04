@@ -2,7 +2,6 @@ package pars
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"math/big"
 	"strconv"
@@ -19,8 +18,6 @@ type anyRuneParser struct {
 func NewAnyRune() Parser {
 	return &anyRuneParser{i: -1}
 }
-
-var errRuneExpected = fmt.Errorf("Expected rune")
 
 func (r *anyRuneParser) Parse(src *reader) (interface{}, error) {
 	r.i = 0
@@ -100,7 +97,7 @@ func NewByte(b byte) Parser {
 			if val == b {
 				return val, nil
 			}
-			return nil, fmt.Errorf("Could not parse expected byte '%v': Unexpected byte '%v'", b, val)
+			return nil, byteExpectationError{expected: b, actual: val}
 		}
 		panic("AnyByte returned type != byte")
 	})
@@ -119,14 +116,14 @@ func NewChar(r rune) Parser {
 func (c *charParser) Parse(src *reader) (interface{}, error) {
 	val, err := c.anyRuneParser.Parse(src)
 	if err != nil {
-		return nil, fmt.Errorf("Could not parse expected rune '%c' (0x%x): %v", c.expected, c.expected, err.Error())
+		return nil, runeExpectationNoRuneError{expected: c.expected, innerError: err}
 	}
 	if val, ok := val.(rune); ok {
 		if val == c.expected {
 			return val, nil
 		}
 		c.anyRuneParser.Unread(src)
-		return nil, fmt.Errorf("Could not parse expected rune '%c' (0x%x): Unexpected rune '%c' (0x%x)", c.expected, c.expected, val, val)
+		return nil, runeExpectationError{expected: c.expected, actual: val}
 	}
 	panic("AnyRune returned type != rune")
 }
@@ -138,7 +135,6 @@ func (c *charParser) Clone() Parser {
 type charPredParser struct {
 	pred func(rune) bool
 	anyRuneParser
-	silent bool
 }
 
 //NewCharPred returns a parser that parses a single rune as long as it fulfills the given predicate.
@@ -146,29 +142,17 @@ func NewCharPred(pred func(rune) bool) Parser {
 	return &charPredParser{pred: pred}
 }
 
-func newSilentCharPred(pred func(rune) bool) Parser {
-	return &charPredParser{pred: pred, silent: true}
-}
-
-var errCharPredParserSilentFailedPredicateError = fmt.Errorf("Could not parse expected rune: Rune does not hold predicate")
-
 func (c *charPredParser) Parse(src *reader) (interface{}, error) {
 	val, err := c.anyRuneParser.Parse(src)
 	if err != nil {
-		if c.silent {
-			return nil, err
-		}
-		return nil, fmt.Errorf("Could not parse expected rune: %v", err.Error())
+		return nil, runePredNoRuneError{innerError: err}
 	}
 	if val, ok := val.(rune); ok {
 		if c.pred(val) {
 			return val, nil
 		}
 		c.anyRuneParser.Unread(src)
-		if c.silent {
-			return nil, errCharPredParserSilentFailedPredicateError
-		}
-		return nil, fmt.Errorf("Could not parse expected rune: Rune '%c' (0x%x) does not hold predicate", val, val)
+		return nil, runePredError{actual: val}
 	}
 	panic("AnyRune returned type != rune")
 }
@@ -180,18 +164,11 @@ func (c *charPredParser) Clone() Parser {
 type stringParser struct {
 	expected string
 	buf      []byte
-	silent   bool
 }
-
-var errStringParserSilentError = fmt.Errorf("Could not parse expected string, error silenced")
 
 //NewString returns a parser for a single known string. Different strings are treated as a parsing error.
 func NewString(expected string) Parser {
 	return &stringParser{expected: expected}
-}
-
-func newSilentString(expected string) Parser {
-	return &stringParser{expected: expected, silent: true}
 }
 
 func (s *stringParser) Parse(src *reader) (val interface{}, err error) {
@@ -203,21 +180,13 @@ func (s *stringParser) Parse(src *reader) (val interface{}, err error) {
 	}
 
 	if n == len(s.buf) {
-		if s.silent {
-			err = errStringParserSilentError
-		} else {
-			err = fmt.Errorf("Unexpected string \"%v\"", string(s.buf))
-		}
+		err = unexpectedStringError{expected: s.expected, actual: string(s.buf)}
 	}
 
 	src.Unread(s.buf[:n])
 	s.buf = nil
 
-	if s.silent {
-		err = errStringParserSilentError
-	} else {
-		err = fmt.Errorf("Could not parse expected string \"%v\": %v", s.expected, err)
-	}
+	err = stringError{expected: s.expected, innerError: err}
 	return nil, err
 }
 
@@ -229,7 +198,7 @@ func (s *stringParser) Unread(src *reader) {
 }
 
 func (s *stringParser) Clone() Parser {
-	return &stringParser{expected: s.expected, silent: s.silent}
+	return &stringParser{expected: s.expected}
 }
 
 //NewRunesUntil returns a parser that parses runes as long as the given endCondition parser does not match.
@@ -239,7 +208,7 @@ func NewRunesUntil(endCondition Parser) Parser {
 
 //NewDelimitedString returns a parser that parses a string between two given delimiter strings and returns the value between.
 func NewDelimitedString(beginDelimiter, endDelimiter string) Parser {
-	return NewRunesToString(NewDiscardLeft(NewString(beginDelimiter), NewDiscardRight(NewRunesUntil(newSilentString(endDelimiter)), NewString(endDelimiter))))
+	return NewRunesToString(NewDiscardLeft(NewString(beginDelimiter), NewDiscardRight(NewRunesUntil(NewString(endDelimiter)), NewString(endDelimiter))))
 }
 
 type eof struct{}
@@ -254,10 +223,10 @@ func (e eof) Parse(src *reader) (interface{}, error) {
 		return nil, nil
 	}
 	if n != 0 {
-		err = fmt.Errorf("Found byte 0x%x", buf[0])
+		err = eofByteError{actual: buf[0]}
 		src.Unread(buf[:])
 	}
-	return nil, fmt.Errorf("Expected EOF: %v", err)
+	return nil, eofOtherError{innerError: err}
 }
 
 func (e eof) Unread(src *reader) {
@@ -292,7 +261,7 @@ func NewInt() Parser {
 	return NewTransformer(newIntegralString(), func(v interface{}) (interface{}, error) {
 		val, err := strconv.Atoi(v.(string))
 		if err != nil {
-			return nil, fmt.Errorf("Could not parse int: %v", err)
+			return nil, intError{innerError: err}
 		}
 		return val, nil
 	})
@@ -304,7 +273,7 @@ func NewBigInt() Parser {
 		bigInt := big.NewInt(0)
 		bigInt, ok := bigInt.SetString(v.(string), 10)
 		if !ok {
-			return nil, fmt.Errorf("Could not parse '%v' as int", v.(string))
+			return nil, intConversionError{actual: v.(string)}
 		}
 		return bigInt, nil
 	})
@@ -315,7 +284,7 @@ func NewFloat() Parser {
 	return NewTransformer(newFloatNumberString(), func(v interface{}) (interface{}, error) {
 		val, err := strconv.ParseFloat(v.(string), 64)
 		if err != nil {
-			return nil, fmt.Errorf("Could not parse float: %v", err)
+			return nil, floatError{innerError: err}
 		}
 		return val, nil
 	})
@@ -337,7 +306,7 @@ func (i *integralStringParser) Parse(src *reader) (interface{}, error) {
 		if buf.Len() == 0 {
 			next = NewOr(NewChar('-'), NewCharPred(unicode.IsDigit))
 		} else {
-			next = newSilentCharPred(unicode.IsDigit)
+			next = NewCharPred(unicode.IsDigit)
 		}
 		var val interface{}
 		val, err = next.Parse(src)
@@ -352,7 +321,7 @@ func (i *integralStringParser) Parse(src *reader) (interface{}, error) {
 		return buf.String(), nil
 	}
 
-	return nil, fmt.Errorf("Could not parse int: %v", err)
+	return nil, intError{innerError: err}
 }
 
 func (i *integralStringParser) Unread(src *reader) {
@@ -387,9 +356,9 @@ func (i *floatNumberStringParser) Parse(src *reader) (interface{}, error) {
 		if buf.Len() == 0 {
 			next = NewOr(NewChar('-'), NewCharPred(unicode.IsDigit))
 		} else if !foundDecimalPoint {
-			next = NewOr(newSilentCharPred(unicode.IsDigit), decimalPointParser)
+			next = NewOr(NewCharPred(unicode.IsDigit), decimalPointParser)
 		} else {
-			next = newSilentCharPred(unicode.IsDigit)
+			next = NewCharPred(unicode.IsDigit)
 		}
 		var val interface{}
 		val, err = next.Parse(src)
@@ -404,7 +373,7 @@ func (i *floatNumberStringParser) Parse(src *reader) (interface{}, error) {
 		return buf.String(), nil
 	}
 
-	return nil, fmt.Errorf("Could not parse float: %v", err)
+	return nil, floatError{innerError: err}
 }
 
 func (i *floatNumberStringParser) Unread(src *reader) {

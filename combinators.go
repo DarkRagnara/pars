@@ -1,9 +1,5 @@
 package pars
 
-import (
-	"fmt"
-)
-
 type seqParser struct {
 	parsers []Parser
 }
@@ -21,7 +17,7 @@ func (s *seqParser) Parse(src *reader) (interface{}, error) {
 			for j := i - 1; j >= 0; j-- {
 				s.parsers[j].Unread(src)
 			}
-			return nil, fmt.Errorf("Could not find expected sequence item %v: %v", i, err)
+			return nil, seqError{index: i, innerError: err}
 		}
 		values[i] = val
 	}
@@ -124,8 +120,6 @@ type exceptParser struct {
 	Parser
 	except Parser
 }
-
-var errExceptionMatched = fmt.Errorf("Excepted parser matched")
 
 //NewExcept returns a parser that wraps another parser so that it fails if a third, excepted parser would succeed.
 func NewExcept(parser, except Parser) Parser {
