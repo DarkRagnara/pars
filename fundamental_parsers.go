@@ -1,10 +1,10 @@
 package pars
 
 import (
-	"bytes"
 	"io"
 	"math/big"
 	"strconv"
+	"strings"
 	"unicode"
 	"unicode/utf8"
 )
@@ -299,7 +299,7 @@ func newIntegralString() Parser {
 }
 
 func (i *integralStringParser) Parse(src *reader) (interface{}, error) {
-	buf := bytes.NewBuffer(nil)
+	buf := strings.Builder{}
 	var err error
 	for {
 		var next Parser
@@ -344,7 +344,7 @@ func newFloatNumberString() Parser {
 }
 
 func (i *floatNumberStringParser) Parse(src *reader) (interface{}, error) {
-	buf := bytes.NewBuffer(nil)
+	buf := strings.Builder{}
 	var err error
 	var foundDecimalPoint bool
 	decimalPointParser := NewTransformer(NewChar('.'), func(decimalPoint interface{}) (interface{}, error) {
