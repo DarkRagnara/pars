@@ -14,7 +14,7 @@ func assertRead(t *testing.T, n int, err error, expectedN int, expectedErr error
 	}
 }
 
-func assertReader(t *testing.T, r *reader, buf []byte, err error) {
+func assertReader(t *testing.T, r *Reader, buf []byte, err error) {
 	if r.lastErr != err {
 		t.Errorf("Expected lastErr in reader %v, but got %v", err, r.lastErr)
 	}

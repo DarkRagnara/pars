@@ -26,7 +26,7 @@ func AnyRune() Parser {
 	return &anyRuneParser{i: -1}
 }
 
-func (r *anyRuneParser) Parse(src *reader) (interface{}, error) {
+func (r *anyRuneParser) Parse(src *Reader) (interface{}, error) {
 	r.i = 0
 	for ; r.i < len(r.buf); r.i++ {
 		_, err := src.Read(r.buf[r.i : r.i+1])
@@ -53,7 +53,7 @@ func (r *anyRuneParser) Parse(src *reader) (interface{}, error) {
 	return nil, errRuneExpected
 }
 
-func (r *anyRuneParser) Unread(src *reader) {
+func (r *anyRuneParser) Unread(src *Reader) {
 	if r.i >= 0 {
 		src.Unread(r.buf[:r.i+1])
 		r.i = -1
@@ -81,7 +81,7 @@ func AnyByte() Parser {
 	return &anyByteParser{}
 }
 
-func (b *anyByteParser) Parse(src *reader) (interface{}, error) {
+func (b *anyByteParser) Parse(src *Reader) (interface{}, error) {
 	n, err := src.Read(b.buf[:])
 	if err != nil {
 		return nil, err
@@ -93,7 +93,7 @@ func (b *anyByteParser) Parse(src *reader) (interface{}, error) {
 	return b.buf[0], nil
 }
 
-func (b *anyByteParser) Unread(src *reader) {
+func (b *anyByteParser) Unread(src *Reader) {
 	if b.read {
 		src.Unread(b.buf[:])
 		b.read = false
@@ -141,7 +141,7 @@ func Char(r rune) Parser {
 	return &charParser{expected: r}
 }
 
-func (c *charParser) Parse(src *reader) (interface{}, error) {
+func (c *charParser) Parse(src *Reader) (interface{}, error) {
 	val, err := c.anyRuneParser.Parse(src)
 	if err != nil {
 		return nil, runeExpectationNoRuneError{expected: c.expected, innerError: err}
@@ -177,7 +177,7 @@ func CharPred(pred func(rune) bool) Parser {
 	return &charPredParser{pred: pred}
 }
 
-func (c *charPredParser) Parse(src *reader) (interface{}, error) {
+func (c *charPredParser) Parse(src *Reader) (interface{}, error) {
 	val, err := c.anyRuneParser.Parse(src)
 	if err != nil {
 		return nil, runePredNoRuneError{innerError: err}
@@ -213,7 +213,7 @@ func String(expected string) Parser {
 	return &stringParser{expected: expected}
 }
 
-func (s *stringParser) Parse(src *reader) (val interface{}, err error) {
+func (s *stringParser) Parse(src *Reader) (val interface{}, err error) {
 	s.buf = make([]byte, len(s.expected))
 	n, err := src.Read(s.buf)
 
@@ -233,7 +233,7 @@ func (s *stringParser) Parse(src *reader) (val interface{}, err error) {
 	return nil, err
 }
 
-func (s *stringParser) Unread(src *reader) {
+func (s *stringParser) Unread(src *Reader) {
 	if s.buf != nil {
 		src.Unread(s.buf)
 		s.buf = nil
@@ -261,7 +261,7 @@ func StringCI(expected string) Parser {
 	return &stringCIParser{expected: expected}
 }
 
-func (s *stringCIParser) Parse(src *reader) (val interface{}, err error) {
+func (s *stringCIParser) Parse(src *Reader) (val interface{}, err error) {
 	s.buf = make([]byte, len(s.expected))
 	n, err := src.Read(s.buf)
 
@@ -281,7 +281,7 @@ func (s *stringCIParser) Parse(src *reader) (val interface{}, err error) {
 	return nil, err
 }
 
-func (s *stringCIParser) Unread(src *reader) {
+func (s *stringCIParser) Unread(src *Reader) {
 	if s.buf != nil {
 		src.Unread(s.buf)
 		s.buf = nil
@@ -321,7 +321,7 @@ type eof struct{}
 //EOF is a parser that never yields a value but that succeeds if and only if the source reached EOF
 var EOF Parser = eof{}
 
-func (e eof) Parse(src *reader) (interface{}, error) {
+func (e eof) Parse(src *Reader) (interface{}, error) {
 	buf := [1]byte{}
 	n, err := src.Read(buf[:])
 	if err == io.EOF {
@@ -334,7 +334,7 @@ func (e eof) Parse(src *reader) (interface{}, error) {
 	return nil, eofOtherError{innerError: err}
 }
 
-func (e eof) Unread(src *reader) {
+func (e eof) Unread(src *Reader) {
 }
 
 func (e eof) Clone() Parser {
@@ -357,11 +357,11 @@ func Error(err error) Parser {
 	return errorParser{err}
 }
 
-func (e errorParser) Parse(src *reader) (interface{}, error) {
+func (e errorParser) Parse(src *Reader) (interface{}, error) {
 	return nil, e.error
 }
 
-func (e errorParser) Unread(src *reader) {
+func (e errorParser) Unread(src *Reader) {
 }
 
 func (e errorParser) Clone() Parser {
@@ -431,7 +431,7 @@ func newIntegralString() Parser {
 	return &integralStringParser{}
 }
 
-func (i *integralStringParser) Parse(src *reader) (interface{}, error) {
+func (i *integralStringParser) Parse(src *Reader) (interface{}, error) {
 	buf := strings.Builder{}
 	var err error
 	for {
@@ -457,7 +457,7 @@ func (i *integralStringParser) Parse(src *reader) (interface{}, error) {
 	return nil, intError{innerError: err}
 }
 
-func (i *integralStringParser) Unread(src *reader) {
+func (i *integralStringParser) Unread(src *Reader) {
 	for j := len(i.parsers) - 1; j >= 0; j-- {
 		i.parsers[j].Unread(src)
 	}
@@ -476,7 +476,7 @@ func newFloatNumberString() Parser {
 	return &floatNumberStringParser{}
 }
 
-func (i *floatNumberStringParser) Parse(src *reader) (interface{}, error) {
+func (i *floatNumberStringParser) Parse(src *Reader) (interface{}, error) {
 	buf := strings.Builder{}
 	var err error
 	var foundDecimalPoint bool
@@ -509,7 +509,7 @@ func (i *floatNumberStringParser) Parse(src *reader) (interface{}, error) {
 	return nil, floatError{innerError: err}
 }
 
-func (i *floatNumberStringParser) Unread(src *reader) {
+func (i *floatNumberStringParser) Unread(src *Reader) {
 	for j := len(i.parsers) - 1; j >= 0; j-- {
 		i.parsers[j].Unread(src)
 	}

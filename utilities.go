@@ -42,7 +42,7 @@ func WithStdLogging(parser Parser, prefix string) Parser {
 	return WithLogging(parser, logger)
 }
 
-func (l *loggingParser) Parse(src *reader) (interface{}, error) {
+func (l *loggingParser) Parse(src *Reader) (interface{}, error) {
 	l.logger.Println("IN: Parse")
 	val, err := l.Parser.Parse(src)
 	if err == nil {
@@ -53,7 +53,7 @@ func (l *loggingParser) Parse(src *reader) (interface{}, error) {
 	return val, err
 }
 
-func (l *loggingParser) Unread(src *reader) {
+func (l *loggingParser) Unread(src *Reader) {
 	l.logger.Println("IN: Unread")
 	l.Parser.Unread(src)
 	l.logger.Println("OUT: Unread")
@@ -81,7 +81,7 @@ func Transformer(parser Parser, transformer func(interface{}) (interface{}, erro
 	return &transformingParser{Parser: parser, transformer: transformer}
 }
 
-func (t *transformingParser) Parse(src *reader) (interface{}, error) {
+func (t *transformingParser) Parse(src *Reader) (interface{}, error) {
 	val, err := t.Parser.Parse(src)
 	if err != nil {
 		return nil, err
@@ -96,7 +96,7 @@ func (t *transformingParser) Parse(src *reader) (interface{}, error) {
 	return val, nil
 }
 
-func (t *transformingParser) Unread(src *reader) {
+func (t *transformingParser) Unread(src *Reader) {
 	if t.read {
 		t.Parser.Unread(src)
 		t.read = false
@@ -118,7 +118,7 @@ func ErrorTransformer(parser Parser, transformer func(error) (interface{}, error
 	return &errorTransformingParser{Parser: parser, transformer: transformer}
 }
 
-func (e *errorTransformingParser) Parse(src *reader) (interface{}, error) {
+func (e *errorTransformingParser) Parse(src *Reader) (interface{}, error) {
 	val, err := e.Parser.Parse(src)
 	if err == nil {
 		e.read = true
@@ -129,7 +129,7 @@ func (e *errorTransformingParser) Parse(src *reader) (interface{}, error) {
 	return val, err
 }
 
-func (e *errorTransformingParser) Unread(src *reader) {
+func (e *errorTransformingParser) Unread(src *Reader) {
 	if e.read {
 		e.Parser.Unread(src)
 		e.read = false

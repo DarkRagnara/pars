@@ -47,14 +47,14 @@ func TestRead(t *testing.T) {
 	assertReader(t, r, []byte{}, io.EOF)
 }
 
-func eofReader() *reader {
-	return newReader(bytes.NewReader([]byte{}))
+func eofReader() *Reader {
+	return NewReader(bytes.NewReader([]byte{}))
 }
 
-func stringReader(s string) *reader {
-	return newReader(strings.NewReader(s))
+func stringReader(s string) *Reader {
+	return NewReader(strings.NewReader(s))
 }
 
-func byteReader(b []byte) *reader {
-	return newReader(bytes.NewReader(b))
+func byteReader(b []byte) *Reader {
+	return NewReader(bytes.NewReader(b))
 }
