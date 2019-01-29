@@ -5,7 +5,7 @@ import (
 )
 
 func BenchmarkParseStringSeq(b *testing.B) {
-	prototype := NewSeq(NewChar('H'), NewChar('e'), NewChar('l'), NewChar('l'), NewChar('o'), NewChar(' '), NewChar('w'), NewChar('o'), NewChar('r'), NewChar('l'), NewChar('d'))
+	prototype := Seq(Char('H'), Char('e'), Char('l'), Char('l'), Char('o'), Char(' '), Char('w'), Char('o'), Char('r'), Char('l'), Char('d'))
 	for i := 0; i < b.N; i++ {
 		p := prototype.Clone()
 		ParseString("Hello world", p)
@@ -13,7 +13,7 @@ func BenchmarkParseStringSeq(b *testing.B) {
 }
 
 func BenchmarkParseStringStringCI(b *testing.B) {
-	prototype := NewStringCI("Hello world")
+	prototype := StringCI("Hello world")
 	for i := 0; i < b.N; i++ {
 		p := prototype.Clone()
 		ParseString("Hello world", p)
@@ -21,7 +21,7 @@ func BenchmarkParseStringStringCI(b *testing.B) {
 }
 
 func BenchmarkParseStringString(b *testing.B) {
-	prototype := NewString("Hello world")
+	prototype := String("Hello world")
 	for i := 0; i < b.N; i++ {
 		p := prototype.Clone()
 		ParseString("Hello world", p)
@@ -29,7 +29,7 @@ func BenchmarkParseStringString(b *testing.B) {
 }
 
 func BenchmarkParseAnyRune(b *testing.B) {
-	prototype := NewAnyRune()
+	prototype := AnyRune()
 	for i := 0; i < b.N; i++ {
 		p := prototype.Clone()
 		ParseString("Hello world", p)
@@ -37,21 +37,21 @@ func BenchmarkParseAnyRune(b *testing.B) {
 }
 
 func BenchmarkParseAnyByte(b *testing.B) {
-	prototype := NewAnyByte()
+	prototype := AnyByte()
 	for i := 0; i < b.N; i++ {
 		p := prototype.Clone()
 		ParseString("Hello world", p)
 	}
 }
 func BenchmarkParseChar(b *testing.B) {
-	prototype := NewChar('H')
+	prototype := Char('H')
 	for i := 0; i < b.N; i++ {
 		p := prototype.Clone()
 		ParseString("Hello world", p)
 	}
 }
 func BenchmarkParseByte(b *testing.B) {
-	prototype := NewByte(byte('H'))
+	prototype := Byte(byte('H'))
 	for i := 0; i < b.N; i++ {
 		p := prototype.Clone()
 		ParseString("Hello world", p)
@@ -59,7 +59,7 @@ func BenchmarkParseByte(b *testing.B) {
 }
 
 func BenchmarkParseDelimitedString(b *testing.B) {
-	prototype := NewDelimitedString("'", "'")
+	prototype := DelimitedString("'", "'")
 	for i := 0; i < b.N; i++ {
 		p := prototype.Clone()
 		ParseString("Hello world", p)
@@ -68,62 +68,62 @@ func BenchmarkParseDelimitedString(b *testing.B) {
 
 func BenchmarkParseBigInt(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		p := NewBigInt()
+		p := BigInt()
 		ParseString("1234567", p)
 	}
 }
 
 func BenchmarkParseNegativeBigInt(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		p := NewBigInt()
+		p := BigInt()
 		ParseString("-1234567", p)
 	}
 }
 
 func BenchmarkParseInt(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		p := NewInt()
+		p := Int()
 		ParseString("1234567", p)
 	}
 }
 
 func BenchmarkParseNegativeInt(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		p := NewInt()
+		p := Int()
 		ParseString("-1234567", p)
 	}
 }
 
 func BenchmarkParseFloat(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		p := NewFloat()
+		p := Float()
 		ParseString("123.4567", p)
 	}
 }
 
 func BenchmarkParseNegativeFloat(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		p := NewFloat()
+		p := Float()
 		ParseString("-123.4567", p)
 	}
 }
 
 func BenchmarkParseAndTransformInt(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		p := NewTransformer(NewInt(), func(v interface{}) (interface{}, error) { return v.(int) + 1, nil })
+		p := Transformer(Int(), func(v interface{}) (interface{}, error) { return v.(int) + 1, nil })
 		ParseString("1234567", p)
 	}
 }
 
 func BenchmarkParseAndTransformNegativeInt(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		p := NewTransformer(NewInt(), func(v interface{}) (interface{}, error) { return v.(int) + 1, nil })
+		p := Transformer(Int(), func(v interface{}) (interface{}, error) { return v.(int) + 1, nil })
 		ParseString("-1234567", p)
 	}
 }
 
 func BenchmarkParseSome(b *testing.B) {
-	prototype := NewSome(NewAnyRune())
+	prototype := Some(AnyRune())
 	for i := 0; i < b.N; i++ {
 		p := prototype.Clone()
 		ParseString("Hello world", p)
@@ -131,7 +131,7 @@ func BenchmarkParseSome(b *testing.B) {
 }
 
 func BenchmarkParseMany(b *testing.B) {
-	prototype := NewMany(NewAnyRune())
+	prototype := Many(AnyRune())
 	for i := 0; i < b.N; i++ {
 		p := prototype.Clone()
 		ParseString("Hello world", p)
@@ -139,7 +139,7 @@ func BenchmarkParseMany(b *testing.B) {
 }
 
 func BenchmarkQuotedCSVStrings(b *testing.B) {
-	prototype := NewSep(NewDelimitedString("\"", "\""), NewChar(','))
+	prototype := Sep(DelimitedString("\"", "\""), Char(','))
 	for i := 0; i < b.N; i++ {
 		p := prototype.Clone()
 		ParseString(`"abc","def","ghi"`, p)
