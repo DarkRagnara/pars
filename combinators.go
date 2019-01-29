@@ -9,7 +9,7 @@ func Seq(parsers ...Parser) Parser {
 	return &seqParser{parsers: parsers}
 }
 
-func (s *seqParser) Parse(src *reader) (interface{}, error) {
+func (s *seqParser) Parse(src *Reader) (interface{}, error) {
 	values := make([]interface{}, len(s.parsers))
 	for i, parser := range s.parsers {
 		val, err := parser.Parse(src)
@@ -24,7 +24,7 @@ func (s *seqParser) Parse(src *reader) (interface{}, error) {
 	return values, nil
 }
 
-func (s *seqParser) Unread(src *reader) {
+func (s *seqParser) Unread(src *Reader) {
 	for i := len(s.parsers) - 1; i >= 0; i-- {
 		s.parsers[i].Unread(src)
 	}
@@ -48,7 +48,7 @@ func Some(parser Parser) Parser {
 	return &someParser{prototype: parser}
 }
 
-func (s *someParser) Parse(src *reader) (interface{}, error) {
+func (s *someParser) Parse(src *Reader) (interface{}, error) {
 	var values []interface{}
 	for {
 		next := s.prototype.Clone()
@@ -63,7 +63,7 @@ func (s *someParser) Parse(src *reader) (interface{}, error) {
 	return values, nil
 }
 
-func (s *someParser) Unread(src *reader) {
+func (s *someParser) Unread(src *Reader) {
 	for i := len(s.used) - 1; i >= 0; i-- {
 		s.used[i].Unread(src)
 	}
@@ -90,7 +90,7 @@ func Or(parsers ...Parser) Parser {
 	return &orParser{parsers: parsers}
 }
 
-func (o *orParser) Parse(src *reader) (val interface{}, err error) {
+func (o *orParser) Parse(src *Reader) (val interface{}, err error) {
 	for _, parser := range o.parsers {
 		val, err = parser.Parse(src)
 		if err == nil {
@@ -101,7 +101,7 @@ func (o *orParser) Parse(src *reader) (val interface{}, err error) {
 	return
 }
 
-func (o *orParser) Unread(src *reader) {
+func (o *orParser) Unread(src *Reader) {
 	if o.selected != nil {
 		o.selected.Unread(src)
 		o.selected = nil
@@ -126,7 +126,7 @@ func Except(parser, except Parser) Parser {
 	return &exceptParser{Parser: parser, except: except}
 }
 
-func (e *exceptParser) Parse(src *reader) (val interface{}, err error) {
+func (e *exceptParser) Parse(src *Reader) (val interface{}, err error) {
 	_, err = e.except.Parse(src)
 	if err == nil {
 		e.except.Unread(src)
@@ -150,7 +150,7 @@ func Optional(parser Parser) Parser {
 	return &optionalParser{Parser: parser}
 }
 
-func (o *optionalParser) Parse(src *reader) (interface{}, error) {
+func (o *optionalParser) Parse(src *Reader) (interface{}, error) {
 	val, err := o.Parser.Parse(src)
 	if err == nil {
 		o.read = true
@@ -159,7 +159,7 @@ func (o *optionalParser) Parse(src *reader) (interface{}, error) {
 	return nil, nil
 }
 
-func (o *optionalParser) Unread(src *reader) {
+func (o *optionalParser) Unread(src *Reader) {
 	if o.read {
 		o.Parser.Unread(src)
 		o.read = false
@@ -180,7 +180,7 @@ func DiscardLeft(left, right Parser) Parser {
 	return &discardLeftParser{leftParser: left, rightParser: right}
 }
 
-func (d *discardLeftParser) Parse(src *reader) (interface{}, error) {
+func (d *discardLeftParser) Parse(src *Reader) (interface{}, error) {
 	_, err := d.leftParser.Parse(src)
 	if err != nil {
 		return nil, err
@@ -193,7 +193,7 @@ func (d *discardLeftParser) Parse(src *reader) (interface{}, error) {
 	return val, err
 }
 
-func (d *discardLeftParser) Unread(src *reader) {
+func (d *discardLeftParser) Unread(src *Reader) {
 	d.rightParser.Unread(src)
 	d.leftParser.Unread(src)
 }
@@ -212,7 +212,7 @@ func DiscardRight(left, right Parser) Parser {
 	return &discardRightParser{leftParser: left, rightParser: right}
 }
 
-func (d *discardRightParser) Parse(src *reader) (interface{}, error) {
+func (d *discardRightParser) Parse(src *Reader) (interface{}, error) {
 	val, err := d.leftParser.Parse(src)
 	if err != nil {
 		return nil, err
@@ -226,7 +226,7 @@ func (d *discardRightParser) Parse(src *reader) (interface{}, error) {
 	return val, nil
 }
 
-func (d *discardRightParser) Unread(src *reader) {
+func (d *discardRightParser) Unread(src *Reader) {
 	d.rightParser.Unread(src)
 	d.leftParser.Unread(src)
 }
@@ -268,7 +268,7 @@ func Recursive(factory func() Parser) Parser {
 	return &recursiveParser{factory: factory}
 }
 
-func (r *recursiveParser) Parse(src *reader) (interface{}, error) {
+func (r *recursiveParser) Parse(src *Reader) (interface{}, error) {
 	r.parser = r.factory()
 	val, err := r.parser.Parse(src)
 	if err != nil {
@@ -279,7 +279,7 @@ func (r *recursiveParser) Parse(src *reader) (interface{}, error) {
 	return val, nil
 }
 
-func (r *recursiveParser) Unread(src *reader) {
+func (r *recursiveParser) Unread(src *Reader) {
 	if r.parser != nil {
 		r.parser.Unread(src)
 		r.parser = nil
