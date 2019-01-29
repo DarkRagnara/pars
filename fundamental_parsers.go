@@ -113,7 +113,7 @@ func NewByte(b byte) Parser {
 
 //Byte returns a parser used to read a single known byte. A different byte is treated as a parsing error.
 func Byte(b byte) Parser {
-	return NewTransformer(NewAnyByte(), func(val interface{}) (interface{}, error) {
+	return Transformer(AnyByte(), func(val interface{}) (interface{}, error) {
 		if val, ok := val.(byte); ok {
 			if val == b {
 				return val, nil
@@ -157,7 +157,7 @@ func (c *charParser) Parse(src *reader) (interface{}, error) {
 }
 
 func (c *charParser) Clone() Parser {
-	return NewChar(c.expected)
+	return Char(c.expected)
 }
 
 type charPredParser struct {
@@ -193,7 +193,7 @@ func (c *charPredParser) Parse(src *reader) (interface{}, error) {
 }
 
 func (c *charPredParser) Clone() Parser {
-	return NewCharPred(c.pred)
+	return CharPred(c.pred)
 }
 
 type stringParser struct {
@@ -301,7 +301,7 @@ func NewRunesUntil(endCondition Parser) Parser {
 
 //RunesUntil returns a parser that parses runes as long as the given endCondition parser does not match.
 func RunesUntil(endCondition Parser) Parser {
-	return NewSome(NewExcept(NewAnyRune(), endCondition))
+	return Some(Except(AnyRune(), endCondition))
 }
 
 //NewDelimitedString returns a parser that parses a string between two given delimiter strings and returns the value between.
@@ -313,7 +313,7 @@ func NewDelimitedString(beginDelimiter, endDelimiter string) Parser {
 
 //DelimitedString returns a parser that parses a string between two given delimiter strings and returns the value between.
 func DelimitedString(beginDelimiter, endDelimiter string) Parser {
-	return NewRunesToString(NewDiscardLeft(NewString(beginDelimiter), NewDiscardRight(NewRunesUntil(NewString(endDelimiter)), NewString(endDelimiter))))
+	return RunesToString(DiscardLeft(String(beginDelimiter), DiscardRight(RunesUntil(String(endDelimiter)), String(endDelimiter))))
 }
 
 type eof struct{}
@@ -377,7 +377,7 @@ func NewInt() Parser {
 
 //Int returns a parser that parses an integer. The parsed integer is converted via strconv.Atoi.
 func Int() Parser {
-	return NewTransformer(newIntegralString(), func(v interface{}) (interface{}, error) {
+	return Transformer(newIntegralString(), func(v interface{}) (interface{}, error) {
 		val, err := strconv.Atoi(v.(string))
 		if err != nil {
 			return nil, intError{innerError: err}
@@ -395,7 +395,7 @@ func NewBigInt() Parser {
 
 //BigInt returns a parser that parses an integer. The parsed integer is returned as a math/big.Int.
 func BigInt() Parser {
-	return NewTransformer(newIntegralString(), func(v interface{}) (interface{}, error) {
+	return Transformer(newIntegralString(), func(v interface{}) (interface{}, error) {
 		bigInt := big.NewInt(0)
 		bigInt, ok := bigInt.SetString(v.(string), 10)
 		if !ok {
@@ -414,7 +414,7 @@ func NewFloat() Parser {
 
 //Float returns a parser that parses a floating point number. The supported format is an optional minus sign followed by digits optionally followed by a decimal point and more digits.
 func Float() Parser {
-	return NewTransformer(newFloatNumberString(), func(v interface{}) (interface{}, error) {
+	return Transformer(newFloatNumberString(), func(v interface{}) (interface{}, error) {
 		val, err := strconv.ParseFloat(v.(string), 64)
 		if err != nil {
 			return nil, floatError{innerError: err}
@@ -437,9 +437,9 @@ func (i *integralStringParser) Parse(src *reader) (interface{}, error) {
 	for {
 		var next Parser
 		if buf.Len() == 0 {
-			next = NewOr(NewChar('-'), NewCharPred(unicode.IsDigit))
+			next = Or(Char('-'), CharPred(unicode.IsDigit))
 		} else {
-			next = NewCharPred(unicode.IsDigit)
+			next = CharPred(unicode.IsDigit)
 		}
 		var val interface{}
 		val, err = next.Parse(src)
@@ -480,18 +480,18 @@ func (i *floatNumberStringParser) Parse(src *reader) (interface{}, error) {
 	buf := strings.Builder{}
 	var err error
 	var foundDecimalPoint bool
-	decimalPointParser := NewTransformer(NewChar('.'), func(decimalPoint interface{}) (interface{}, error) {
+	decimalPointParser := Transformer(Char('.'), func(decimalPoint interface{}) (interface{}, error) {
 		foundDecimalPoint = true
 		return decimalPoint, nil
 	})
 	for {
 		var next Parser
 		if buf.Len() == 0 {
-			next = NewOr(NewChar('-'), NewCharPred(unicode.IsDigit))
+			next = Or(Char('-'), CharPred(unicode.IsDigit))
 		} else if !foundDecimalPoint {
-			next = NewOr(NewCharPred(unicode.IsDigit), decimalPointParser)
+			next = Or(CharPred(unicode.IsDigit), decimalPointParser)
 		} else {
-			next = NewCharPred(unicode.IsDigit)
+			next = CharPred(unicode.IsDigit)
 		}
 		var val interface{}
 		val, err = next.Parse(src)

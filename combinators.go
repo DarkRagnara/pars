@@ -97,7 +97,7 @@ func NewMany(parser Parser) Parser {
 
 //Many returns a parser that matches a given parser one or more times. Not matching at all is an error.
 func Many(parser Parser) Parser {
-	return NewSplicingSeq(parser, NewSome(parser))
+	return SplicingSeq(parser, Some(parser))
 }
 
 type orParser struct {
@@ -173,7 +173,7 @@ func (e *exceptParser) Parse(src *reader) (val interface{}, err error) {
 }
 
 func (e *exceptParser) Clone() Parser {
-	return NewExcept(e.Parser.Clone(), e.except.Clone())
+	return Except(e.Parser.Clone(), e.except.Clone())
 }
 
 type optionalParser struct {
@@ -249,7 +249,7 @@ func (d *discardLeftParser) Unread(src *reader) {
 }
 
 func (d *discardLeftParser) Clone() Parser {
-	return NewDiscardLeft(d.leftParser.Clone(), d.rightParser.Clone())
+	return DiscardLeft(d.leftParser.Clone(), d.rightParser.Clone())
 }
 
 type discardRightParser struct {
@@ -289,7 +289,7 @@ func (d *discardRightParser) Unread(src *reader) {
 }
 
 func (d *discardRightParser) Clone() Parser {
-	return NewDiscardRight(d.leftParser.Clone(), d.rightParser.Clone())
+	return DiscardRight(d.leftParser.Clone(), d.rightParser.Clone())
 }
 
 //NewSplicingSeq returns a parser that works like a Seq but joins slices returned by its subparsers into a single slice.
@@ -301,7 +301,7 @@ func NewSplicingSeq(parsers ...Parser) Parser {
 
 //SplicingSeq returns a parser that works like a Seq but joins slices returned by its subparsers into a single slice.
 func SplicingSeq(parsers ...Parser) Parser {
-	return NewTransformer(NewSeq(parsers...), splice)
+	return Transformer(Seq(parsers...), splice)
 }
 
 func splice(val interface{}) (interface{}, error) {
@@ -326,7 +326,7 @@ func NewSep(item, separator Parser) Parser {
 
 //Sep returns a parser that parses a sequence of items according to a first parser that are separated by matches of a second parser.
 func Sep(item, separator Parser) Parser {
-	return NewSplicingSeq(item, NewSome(NewDiscardLeft(separator, item)))
+	return SplicingSeq(item, Some(DiscardLeft(separator, item)))
 }
 
 type recursiveParser struct {
@@ -365,5 +365,5 @@ func (r *recursiveParser) Unread(src *reader) {
 }
 
 func (r *recursiveParser) Clone() Parser {
-	return NewRecursive(r.factory)
+	return Recursive(r.factory)
 }

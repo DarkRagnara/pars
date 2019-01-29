@@ -104,7 +104,7 @@ func (t *transformingParser) Unread(src *reader) {
 }
 
 func (t *transformingParser) Clone() Parser {
-	return NewTransformer(t.Parser.Clone(), t.transformer)
+	return Transformer(t.Parser.Clone(), t.transformer)
 }
 
 //NewSwallowWhitespace wraps a parser so that it removes leading and trailing whitespace.
@@ -116,7 +116,7 @@ func NewSwallowWhitespace(parser Parser) Parser {
 
 //SwallowWhitespace wraps a parser so that it removes leading and trailing whitespace.
 func SwallowWhitespace(parser Parser) Parser {
-	return NewSwallowLeadingWhitespace(NewSwallowTrailingWhitespace(parser))
+	return SwallowLeadingWhitespace(SwallowTrailingWhitespace(parser))
 }
 
 //NewSwallowLeadingWhitespace wraps a parser so that it removes leading whitespace.
@@ -128,7 +128,7 @@ func NewSwallowLeadingWhitespace(parser Parser) Parser {
 
 //SwallowLeadingWhitespace wraps a parser so that it removes leading whitespace.
 func SwallowLeadingWhitespace(parser Parser) Parser {
-	return NewDiscardLeft(NewSome(NewCharPred(unicode.IsSpace)), parser)
+	return DiscardLeft(Some(CharPred(unicode.IsSpace)), parser)
 }
 
 //NewSwallowTrailingWhitespace wraps a parser so that it removes trailing whitespace.
@@ -140,7 +140,7 @@ func NewSwallowTrailingWhitespace(parser Parser) Parser {
 
 //SwallowTrailingWhitespace wraps a parser so that it removes trailing whitespace.
 func SwallowTrailingWhitespace(parser Parser) Parser {
-	return NewDiscardRight(parser, NewSome(NewCharPred(unicode.IsSpace)))
+	return DiscardRight(parser, Some(CharPred(unicode.IsSpace)))
 }
 
 //NewRunesToString wraps a parser that returns a slice of runes so that it returns a string instead.
@@ -154,7 +154,7 @@ func NewRunesToString(parser Parser) Parser {
 //RunesToString wraps a parser that returns a slice of runes so that it returns a string instead.
 //The returned parser WILL PANIC if the wrapped parser returns something that is not a slice of runes!
 func RunesToString(parser Parser) Parser {
-	return NewTransformer(parser, joinRunesToString)
+	return Transformer(parser, joinRunesToString)
 }
 
 func joinRunesToString(val interface{}) (interface{}, error) {
