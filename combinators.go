@@ -4,13 +4,6 @@ type seqParser struct {
 	parsers []Parser
 }
 
-//NewSeq returns a parser that matches all of its given parsers in order or none of them.
-//
-//Deprecated: Use Seq instead.
-func NewSeq(parsers ...Parser) Parser {
-	return Seq(parsers...)
-}
-
 //Seq returns a parser that matches all of its given parsers in order or none of them.
 func Seq(parsers ...Parser) Parser {
 	return &seqParser{parsers: parsers}
@@ -50,13 +43,6 @@ type someParser struct {
 	used      []Parser
 }
 
-//NewSome returns a parser that matches a given parser zero or more times. Not matching at all is not an error.
-//
-//Deprecated: Use Some instead.
-func NewSome(parser Parser) Parser {
-	return Some(parser)
-}
-
 //Some returns a parser that matches a given parser zero or more times. Not matching at all is not an error.
 func Some(parser Parser) Parser {
 	return &someParser{prototype: parser}
@@ -88,13 +74,6 @@ func (s *someParser) Clone() Parser {
 	return &someParser{prototype: s.prototype.Clone()}
 }
 
-//NewMany returns a parser that matches a given parser one or more times. Not matching at all is an error.
-//
-//Deprecated: Use Many instead.
-func NewMany(parser Parser) Parser {
-	return Many(parser)
-}
-
 //Many returns a parser that matches a given parser one or more times. Not matching at all is an error.
 func Many(parser Parser) Parser {
 	return SplicingSeq(parser, Some(parser))
@@ -103,14 +82,6 @@ func Many(parser Parser) Parser {
 type orParser struct {
 	parsers  []Parser
 	selected Parser
-}
-
-//NewOr returns a parser that matches the first of a given set of parsers. A later parser will not be tried if an earlier match was found.
-//The returned parser uses the error message of the last parser verbatim.
-//
-//Deprecated: Use Or instead.
-func NewOr(parsers ...Parser) Parser {
-	return Or(parsers...)
 }
 
 //Or returns a parser that matches the first of a given set of parsers. A later parser will not be tried if an earlier match was found.
@@ -150,13 +121,6 @@ type exceptParser struct {
 	except Parser
 }
 
-//NewExcept returns a parser that wraps another parser so that it fails if a third, excepted parser would succeed.
-//
-//Deprecated: Use Except instead.
-func NewExcept(parser, except Parser) Parser {
-	return Except(parser, except)
-}
-
 //Except returns a parser that wraps another parser so that it fails if a third, excepted parser would succeed.
 func Except(parser, except Parser) Parser {
 	return &exceptParser{Parser: parser, except: except}
@@ -179,13 +143,6 @@ func (e *exceptParser) Clone() Parser {
 type optionalParser struct {
 	read bool
 	Parser
-}
-
-//NewOptional returns a parser that reads exactly one result according to a given other parser. If it fails, the error is discarded and nil is returned.
-//
-//Deprecated: Use Optional instead.
-func NewOptional(parser Parser) Parser {
-	return Optional(parser)
 }
 
 //Optional returns a parser that reads exactly one result according to a given other parser. If it fails, the error is discarded and nil is returned.
@@ -216,13 +173,6 @@ func (o *optionalParser) Clone() Parser {
 type discardLeftParser struct {
 	leftParser  Parser
 	rightParser Parser
-}
-
-//NewDiscardLeft returns a parser that calls two other parsers but only returns the result of the second parser. Both parsers must succeed.
-//
-//Deprecated: Use DiscardLeft instead.
-func NewDiscardLeft(left, right Parser) Parser {
-	return DiscardLeft(left, right)
 }
 
 //DiscardLeft returns a parser that calls two other parsers but only returns the result of the second parser. Both parsers must succeed.
@@ -257,13 +207,6 @@ type discardRightParser struct {
 	rightParser Parser
 }
 
-//NewDiscardRight returns a parser that calls two other parsers but only returns the result of the first parser. Both parsers must succeed.
-//
-//Deprecated: Use DiscardRight instead.
-func NewDiscardRight(left, right Parser) Parser {
-	return DiscardRight(left, right)
-}
-
 //DiscardRight returns a parser that calls two other parsers but only returns the result of the first parser. Both parsers must succeed.
 func DiscardRight(left, right Parser) Parser {
 	return &discardRightParser{leftParser: left, rightParser: right}
@@ -292,13 +235,6 @@ func (d *discardRightParser) Clone() Parser {
 	return DiscardRight(d.leftParser.Clone(), d.rightParser.Clone())
 }
 
-//NewSplicingSeq returns a parser that works like a Seq but joins slices returned by its subparsers into a single slice.
-//
-//Deprecated: Use SplicingSeq instead.
-func NewSplicingSeq(parsers ...Parser) Parser {
-	return SplicingSeq(parsers...)
-}
-
 //SplicingSeq returns a parser that works like a Seq but joins slices returned by its subparsers into a single slice.
 func SplicingSeq(parsers ...Parser) Parser {
 	return Transformer(Seq(parsers...), splice)
@@ -317,13 +253,6 @@ func splice(val interface{}) (interface{}, error) {
 	return values, nil
 }
 
-//NewSep returns a parser that parses a sequence of items according to a first parser that are separated by matches of a second parser.
-//
-//Deprecated: Use Sep instead.
-func NewSep(item, separator Parser) Parser {
-	return Sep(item, separator)
-}
-
 //Sep returns a parser that parses a sequence of items according to a first parser that are separated by matches of a second parser.
 func Sep(item, separator Parser) Parser {
 	return SplicingSeq(item, Some(DiscardLeft(separator, item)))
@@ -332,13 +261,6 @@ func Sep(item, separator Parser) Parser {
 type recursiveParser struct {
 	parser  Parser
 	factory func() Parser
-}
-
-//NewRecursive allows to recursively define a parser in terms of itself.
-//
-//Deprecated: Use Recursive instead.
-func NewRecursive(factory func() Parser) Parser {
-	return Recursive(factory)
 }
 
 //Recursive allows to recursively define a parser in terms of itself.

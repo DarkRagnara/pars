@@ -14,13 +14,6 @@ type anyRuneParser struct {
 	i   int
 }
 
-//NewAnyRune returns a parser that parses a single valid rune. If no such rune can be read, ErrRuneExpected is returned.
-//
-//Deprecated: Use AnyRune instead.
-func NewAnyRune() Parser {
-	return AnyRune()
-}
-
 //AnyRune returns a parser that parses a single valid rune. If no such rune can be read, ErrRuneExpected is returned.
 func AnyRune() Parser {
 	return &anyRuneParser{i: -1}
@@ -69,13 +62,6 @@ type anyByteParser struct {
 	read bool
 }
 
-//NewAnyByte returns a parser that reads exactly one byte from the source.
-//
-//Deprecated: Use AnyByte instead.
-func NewAnyByte() Parser {
-	return AnyByte()
-}
-
 //AnyByte returns a parser that reads exactly one byte from the source.
 func AnyByte() Parser {
 	return &anyByteParser{}
@@ -104,13 +90,6 @@ func (b *anyByteParser) Clone() Parser {
 	return &anyByteParser{}
 }
 
-//NewByte returns a parser used to read a single known byte. A different byte is treated as a parsing error.
-//
-//Deprecated: Use Byte instead.
-func NewByte(b byte) Parser {
-	return Byte(b)
-}
-
 //Byte returns a parser used to read a single known byte. A different byte is treated as a parsing error.
 func Byte(b byte) Parser {
 	return Transformer(AnyByte(), func(val interface{}) (interface{}, error) {
@@ -127,13 +106,6 @@ func Byte(b byte) Parser {
 type charParser struct {
 	expected rune
 	anyRuneParser
-}
-
-//NewChar returns a parser used to read a single known rune. A different rune is treated as a parsing error.
-//
-//Deprecated: Use Char instead.
-func NewChar(r rune) Parser {
-	return Char(r)
 }
 
 //Char returns a parser used to read a single known rune. A different rune is treated as a parsing error.
@@ -165,13 +137,6 @@ type charPredParser struct {
 	anyRuneParser
 }
 
-//NewCharPred returns a parser that parses a single rune as long as it fulfills the given predicate.
-//
-//Deprecated: Use CharPred instead.
-func NewCharPred(pred func(rune) bool) Parser {
-	return CharPred(pred)
-}
-
 //CharPred returns a parser that parses a single rune as long as it fulfills the given predicate.
 func CharPred(pred func(rune) bool) Parser {
 	return &charPredParser{pred: pred}
@@ -199,13 +164,6 @@ func (c *charPredParser) Clone() Parser {
 type stringParser struct {
 	expected string
 	buf      []byte
-}
-
-//NewString returns a parser for a single known string. Different strings are treated as a parsing error.
-//
-//Deprecated: Use String instead.
-func NewString(expected string) Parser {
-	return String(expected)
 }
 
 //String returns a parser for a single known string. Different strings are treated as a parsing error.
@@ -249,13 +207,6 @@ type stringCIParser struct {
 	buf      []byte
 }
 
-//NewStringCI returns a case-insensitive parser for a single known string. Different strings are treated as a parsing error.
-//
-//Deprecated: Use StringCI instead.
-func NewStringCI(expected string) Parser {
-	return StringCI(expected)
-}
-
 //StringCI returns a case-insensitive parser for a single known string. Different strings are treated as a parsing error.
 func StringCI(expected string) Parser {
 	return &stringCIParser{expected: expected}
@@ -292,23 +243,9 @@ func (s *stringCIParser) Clone() Parser {
 	return &stringCIParser{expected: s.expected}
 }
 
-//NewRunesUntil returns a parser that parses runes as long as the given endCondition parser does not match.
-//
-//Deprecated: Use RunesUntil instead.
-func NewRunesUntil(endCondition Parser) Parser {
-	return RunesUntil(endCondition)
-}
-
 //RunesUntil returns a parser that parses runes as long as the given endCondition parser does not match.
 func RunesUntil(endCondition Parser) Parser {
 	return Some(Except(AnyRune(), endCondition))
-}
-
-//NewDelimitedString returns a parser that parses a string between two given delimiter strings and returns the value between.
-//
-//Deprecated: Use DelimitedString instead.
-func NewDelimitedString(beginDelimiter, endDelimiter string) Parser {
-	return DelimitedString(beginDelimiter, endDelimiter)
 }
 
 //DelimitedString returns a parser that parses a string between two given delimiter strings and returns the value between.
@@ -345,13 +282,6 @@ type errorParser struct {
 	error
 }
 
-//NewError returns a parser that always fails with the given error
-//
-//Deprecated: Use Error instead.
-func NewError(err error) Parser {
-	return Error(err)
-}
-
 //Error returns a parser that always fails with the given error
 func Error(err error) Parser {
 	return errorParser{err}
@@ -368,13 +298,6 @@ func (e errorParser) Clone() Parser {
 	return e
 }
 
-//NewInt returns a parser that parses an integer. The parsed integer is converted via strconv.Atoi.
-//
-//Deprecated: Use Int instead.
-func NewInt() Parser {
-	return Int()
-}
-
 //Int returns a parser that parses an integer. The parsed integer is converted via strconv.Atoi.
 func Int() Parser {
 	return Transformer(newIntegralString(), func(v interface{}) (interface{}, error) {
@@ -384,13 +307,6 @@ func Int() Parser {
 		}
 		return val, nil
 	})
-}
-
-//NewBigInt returns a parser that parses an integer. The parsed integer is returned as a math/big.Int.
-//
-//Deprecated: Use BigInt instead.
-func NewBigInt() Parser {
-	return BigInt()
 }
 
 //BigInt returns a parser that parses an integer. The parsed integer is returned as a math/big.Int.
@@ -403,13 +319,6 @@ func BigInt() Parser {
 		}
 		return bigInt, nil
 	})
-}
-
-//NewFloat returns a parser that parses a floating point number. The supported format is an optional minus sign followed by digits optionally followed by a decimal point and more digits.
-//
-//Deprecated: Use Float instead.
-func NewFloat() Parser {
-	return Float()
 }
 
 //Float returns a parser that parses a floating point number. The supported format is an optional minus sign followed by digits optionally followed by a decimal point and more digits.
