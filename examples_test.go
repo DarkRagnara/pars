@@ -2,6 +2,8 @@ package pars
 
 import (
 	"fmt"
+	"strings"
+	"unicode"
 )
 
 func ExampleDiscardLeft() {
@@ -56,4 +58,27 @@ func ExampleOr() {
 
 	//Output:
 	//124: string
+}
+
+func ExampleScanner() {
+	data := "this is a text of words"
+	reader := NewReader(strings.NewReader(data))
+
+	wordParser := SwallowTrailingWhitespace(RunesToString(RunesUntil(CharPred(unicode.IsSpace))))
+
+	scanner := NewScanner(reader, wordParser)
+
+	for scanner.Scan() {
+		fmt.Println(scanner.ResultString())
+	}
+	fmt.Println(scanner.Err())
+
+	//Output:
+	//this
+	//is
+	//a
+	//text
+	//of
+	//words
+	//<nil>
 }
