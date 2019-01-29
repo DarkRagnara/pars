@@ -15,32 +15,32 @@ func ParseCalculation(s string) (Evaler, error) {
 
 //NewCalculationParser parses a calculation. After the calculation, EOF must occur.
 func NewCalculationParser() pars.Parser {
-	return pars.NewDiscardRight(NewTermParser(), pars.EOF)
+	return pars.DiscardRight(NewTermParser(), pars.EOF)
 }
 
 //NewTermParser parses a calculation consisting of added or subtracted calculations of products or a single product.
 func NewTermParser() pars.Parser {
-	return pars.NewOr(pars.NewTransformer(pars.NewSeq(NewProductParser(), NewTermOperatorParser(), pars.NewRecursive(NewTermParser)), toCalculation), NewProductParser())
+	return pars.Or(pars.Transformer(pars.Seq(NewProductParser(), NewTermOperatorParser(), pars.Recursive(NewTermParser)), toCalculation), NewProductParser())
 }
 
 //NewTermOperatorParser parses a '+' or '-' sign.
 func NewTermOperatorParser() pars.Parser {
-	return pars.NewTransformer(pars.NewSwallowWhitespace(pars.NewOr(pars.NewChar('+'), pars.NewChar('-'))), toOperator)
+	return pars.Transformer(pars.SwallowWhitespace(pars.Or(pars.Char('+'), pars.Char('-'))), toOperator)
 }
 
 //NewProductParser parses a calculation consisting of multiplied or divided numbers or a single number.
 func NewProductParser() pars.Parser {
-	return pars.NewOr(pars.NewTransformer(pars.NewSeq(NewNumberParser(), NewPrductOperatorParser(), pars.NewRecursive(NewProductParser)), toCalculation), NewNumberParser())
+	return pars.Or(pars.Transformer(pars.Seq(NewNumberParser(), NewPrductOperatorParser(), pars.Recursive(NewProductParser)), toCalculation), NewNumberParser())
 }
 
 //NewNumberParser parses a single number.
 func NewNumberParser() pars.Parser {
-	return pars.NewTransformer(pars.NewSwallowWhitespace(pars.NewFloat()), toNumber)
+	return pars.Transformer(pars.SwallowWhitespace(pars.Float()), toNumber)
 }
 
 //NewPrductOperatorParser parses a '*' or '-' sign.
 func NewPrductOperatorParser() pars.Parser {
-	return pars.NewTransformer(pars.NewSwallowWhitespace(pars.NewOr(pars.NewChar('*'), pars.NewChar('/'))), toOperator)
+	return pars.Transformer(pars.SwallowWhitespace(pars.Or(pars.Char('*'), pars.Char('/'))), toOperator)
 }
 
 func toOperator(v interface{}) (interface{}, error) {

@@ -20,9 +20,9 @@ type TemperatureParser struct {
 //NewTemperatureParser creates a new TemperatureParser instance.
 func NewTemperatureParser() TemperatureParser {
 	//Define the format
-	simpleParser := pars.NewSeq(pars.NewInt(), pars.NewOr(pars.NewString("°C"), pars.NewString("°F")))
+	simpleParser := pars.Seq(pars.Int(), pars.Or(pars.String("°C"), pars.String("°F")))
 	//Add an conversion
-	transformedParser := pars.NewTransformer(simpleParser, transformParsedTemperatureToCelsius)
+	transformedParser := pars.Transformer(simpleParser, transformParsedTemperatureToCelsius)
 
 	return TemperatureParser{Parser: transformedParser}
 }
@@ -61,7 +61,7 @@ func transformParsedTemperatureToCelsius(parserResult interface{}) (interface{},
 	}
 }
 
-func ExampleNewTransformer() {
+func ExampleTransformer() {
 	sample1 := "32°C"
 	sample2 := "104°F"
 	sample3 := "128K"

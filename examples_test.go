@@ -4,10 +4,10 @@ import (
 	"fmt"
 )
 
-func ExampleNewDiscardLeft() {
+func ExampleDiscardLeft() {
 	data := "$123"
 
-	dollarParser := NewDiscardLeft(NewChar('$'), NewInt())
+	dollarParser := DiscardLeft(Char('$'), Int())
 
 	result, err := ParseString(data, dollarParser)
 	if err != nil {
@@ -21,10 +21,10 @@ func ExampleNewDiscardLeft() {
 	//123: int
 }
 
-func ExampleNewSeq() {
+func ExampleSeq() {
 	data := "$123"
 
-	dollarParser := NewSeq(NewChar('$'), NewInt())
+	dollarParser := Seq(Char('$'), Int())
 
 	result, err := ParseString(data, dollarParser)
 	if err != nil {
@@ -41,10 +41,10 @@ func ExampleNewSeq() {
 	//123: int
 }
 
-func ExampleNewOr() {
+func ExampleOr() {
 	data := "124"
 
-	parser := NewOr(NewString("123"), NewString("124"))
+	parser := Or(String("123"), String("124"))
 
 	result, err := ParseString(data, parser)
 	if err != nil {
