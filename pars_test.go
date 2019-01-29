@@ -5,11 +5,11 @@ import (
 )
 
 func TestParseStringFunc(t *testing.T) {
-	val, err := ParseString("abc", NewString("ab"))
+	val, err := ParseString("abc", String("ab"))
 	assertParse(t, val, err, "ab", nil)
 }
 
 func TestParseFromReaderFunc(t *testing.T) {
-	val, err := ParseFromReader(stringReader("abc"), NewString("ab"))
+	val, err := ParseFromReader(stringReader("abc"), String("ab"))
 	assertParse(t, val, err, "ab", nil)
 }
