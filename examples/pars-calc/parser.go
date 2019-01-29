@@ -1,7 +1,7 @@
 package main
 
 import (
-	"bitbucket.org/ragnara/pars"
+	"bitbucket.org/ragnara/pars/v2"
 )
 
 //ParseCalculation parses a calculation into an evaler.

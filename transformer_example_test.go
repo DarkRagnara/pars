@@ -1,7 +1,7 @@
 package pars_test
 
 import (
-	"bitbucket.org/ragnara/pars"
+	"bitbucket.org/ragnara/pars/v2"
 	"fmt"
 )
 
