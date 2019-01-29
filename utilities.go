@@ -107,6 +107,39 @@ func (t *transformingParser) Clone() Parser {
 	return Transformer(t.Parser.Clone(), t.transformer)
 }
 
+type errorTransformingParser struct {
+	Parser
+	transformer func(error) (interface{}, error)
+	read        bool
+}
+
+//ErrorTransformer wraps a parser so that an error result is transformed according to the given function. If the wrapped parser was successful, the result is not changed.
+func ErrorTransformer(parser Parser, transformer func(error) (interface{}, error)) Parser {
+	return &errorTransformingParser{Parser: parser, transformer: transformer}
+}
+
+func (e *errorTransformingParser) Parse(src *reader) (interface{}, error) {
+	val, err := e.Parser.Parse(src)
+	if err == nil {
+		e.read = true
+		return val, nil
+	}
+
+	val, err = e.transformer(err)
+	return val, err
+}
+
+func (e *errorTransformingParser) Unread(src *reader) {
+	if e.read {
+		e.Parser.Unread(src)
+		e.read = false
+	}
+}
+
+func (e *errorTransformingParser) Clone() Parser {
+	return ErrorTransformer(e.Parser.Clone(), e.transformer)
+}
+
 //NewSwallowWhitespace wraps a parser so that it removes leading and trailing whitespace.
 //
 //Deprecated: Use SwallowWhitespace instead.
