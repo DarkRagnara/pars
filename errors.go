@@ -129,3 +129,18 @@ type exceptionError struct{}
 func (e exceptionError) Error() string {
 	return "Excepted parser matched"
 }
+
+type dispatchWithoutMatch struct{}
+
+func (d dispatchWithoutMatch) Error() string {
+	return "No dispatch clause matched"
+}
+
+type describeClauseError struct {
+	description string
+	innerError  error
+}
+
+func (d describeClauseError) Error() string {
+	return fmt.Sprintf("%v expected: %v", d.description, d.innerError)
+}
