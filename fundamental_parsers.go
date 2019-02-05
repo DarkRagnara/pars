@@ -383,7 +383,7 @@ func floatNumberString() Parser {
 	return &floatNumberStringParser{}
 }
 
-func (i *floatNumberStringParser) Parse(src *Reader) (interface{}, error) {
+func (f *floatNumberStringParser) Parse(src *Reader) (interface{}, error) {
 	buf := strings.Builder{}
 	var err error
 	var foundDecimalPoint bool
@@ -407,7 +407,7 @@ func (i *floatNumberStringParser) Parse(src *Reader) (interface{}, error) {
 			break
 		}
 		buf.WriteRune(val.(rune))
-		i.parsers = append(i.parsers, next)
+		f.parsers = append(f.parsers, next)
 	}
 	if buf.Len() > 0 {
 		return buf.String(), nil
@@ -416,11 +416,11 @@ func (i *floatNumberStringParser) Parse(src *Reader) (interface{}, error) {
 	return nil, floatError{innerError: err}
 }
 
-func (i *floatNumberStringParser) Unread(src *Reader) {
-	unreadParsers(i.parsers, src)
-	i.parsers = nil
+func (f *floatNumberStringParser) Unread(src *Reader) {
+	unreadParsers(f.parsers, src)
+	f.parsers = nil
 }
 
-func (i *floatNumberStringParser) Clone() Parser {
+func (f *floatNumberStringParser) Clone() Parser {
 	return floatNumberString()
 }
