@@ -81,3 +81,9 @@ func TestErrorTransformerUnread(t *testing.T) {
 	val, err = String("123").Parse(r)
 	assertParse(t, val, err, "123", nil)
 }
+
+func TestJoinString(t *testing.T) {
+	r := stringReader("abbcde")
+	val, err := JoinString(Seq(AnyRune(), Char('b'), Seq(Char('b')), String("cd"), Some(Char('e')))).Parse(r)
+	assertParse(t, val, err, "abbcde", nil)
+}

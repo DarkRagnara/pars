@@ -135,7 +135,8 @@ func SwallowTrailingWhitespace(parser Parser) Parser {
 }
 
 //JoinString wraps a parser that returns a slice of runes or strings so that it returns a single string instead.
-//Runes and strings can be mixed in the same slice.
+//Runes and strings can be mixed in the same slice. The slice also can contain other slices of runes and strings,
+//recursively.
 //The returned parser WILL PANIC if the wrapped parser returns something that is not a slice of runes or strings!
 func JoinString(parser Parser) Parser {
 	return Transformer(parser, joinToString)
@@ -146,13 +147,21 @@ func joinToString(val interface{}) (interface{}, error) {
 
 	builder := strings.Builder{}
 	for _, v := range vals {
-		if r, ok := v.(rune); ok {
-			builder.WriteRune(r)
-		} else if s, ok := v.(string); ok {
-			builder.WriteString(s)
-		} else {
-			panic(v)
-		}
+		joinToStringHelper(&builder, v)
 	}
 	return builder.String(), nil
+}
+
+func joinToStringHelper(builder *strings.Builder, val interface{}) {
+	if r, ok := val.(rune); ok {
+		builder.WriteRune(r)
+	} else if s, ok := val.(string); ok {
+		builder.WriteString(s)
+	} else if vals, ok := val.([]interface{}); ok {
+		for _, v := range vals {
+			joinToStringHelper(builder, v)
+		}
+	} else {
+		panic(val)
+	}
 }

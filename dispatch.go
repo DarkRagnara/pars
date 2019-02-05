@@ -113,8 +113,9 @@ func (d DescribeClause) TransformError(err error) error {
 }
 
 //StringJoiningClause extends a clause that consists of parsers that return runes or strings so that it
-//returnes a single string instead.
-//StringJoiningClause WILL PANIC if any of the parsers return something other than a rune or a string.
+//returnes a single string instead. Slices are handled recursively.
+//StringJoiningClause WILL PANIC if any of the parsers return something other than a rune or a string or a
+//slice of these types.
 type StringJoiningClause struct {
 	DispatchClause
 }
