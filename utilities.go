@@ -134,15 +134,6 @@ func SwallowTrailingWhitespace(parser Parser) Parser {
 	return DiscardRight(parser, Some(CharPred(unicode.IsSpace)))
 }
 
-//RunesToString wraps a parser that returns a slice of runes or strings so that it returns a single string instead.
-//Runes and strings can be mixed in the same slice.
-//The returned parser WILL PANIC if the wrapped parser returns something that is not a slice of runes or strings!
-//
-//Deprecated: Use JoinString instead.
-func RunesToString(parser Parser) Parser {
-	return JoinString(parser)
-}
-
 //JoinString wraps a parser that returns a slice of runes or strings so that it returns a single string instead.
 //Runes and strings can be mixed in the same slice.
 //The returned parser WILL PANIC if the wrapped parser returns something that is not a slice of runes or strings!
