@@ -91,8 +91,12 @@ func (c Clause) Parsers() []Parser {
 	return c
 }
 
-//TransformResult returns the slice of values unchanged.
+//TransformResult returns the only value if the slice of values has only one element.
+//Otherwise it returns the slice of values unchanged.
 func (c Clause) TransformResult(val []interface{}) interface{} {
+	if len(val) == 1 {
+		return val[0]
+	}
 	return val
 }
 
@@ -104,12 +108,12 @@ func (c Clause) TransformError(err error) error {
 //DescribeClause extends the error message of a clause so that a custom description is part of the message.
 type DescribeClause struct {
 	DispatchClause
-	description string
+	Description string
 }
 
 //TransformError extends the error message of a clause so that a custom description is part of the message.
 func (d DescribeClause) TransformError(err error) error {
-	return describeClauseError{description: d.description, innerError: err}
+	return describeClauseError{description: d.Description, innerError: err}
 }
 
 //StringJoiningClause extends a clause that consists of parsers that return runes or strings so that it
