@@ -377,7 +377,7 @@ func NewInt() Parser {
 
 //Int returns a parser that parses an integer. The parsed integer is converted via strconv.Atoi.
 func Int() Parser {
-	return Transformer(newIntegralString(), func(v interface{}) (interface{}, error) {
+	return Transformer(integralString(), func(v interface{}) (interface{}, error) {
 		val, err := strconv.Atoi(v.(string))
 		if err != nil {
 			return nil, intError{innerError: err}
@@ -395,7 +395,7 @@ func NewBigInt() Parser {
 
 //BigInt returns a parser that parses an integer. The parsed integer is returned as a math/big.Int.
 func BigInt() Parser {
-	return Transformer(newIntegralString(), func(v interface{}) (interface{}, error) {
+	return Transformer(integralString(), func(v interface{}) (interface{}, error) {
 		bigInt := big.NewInt(0)
 		bigInt, ok := bigInt.SetString(v.(string), 10)
 		if !ok {
@@ -414,7 +414,7 @@ func NewFloat() Parser {
 
 //Float returns a parser that parses a floating point number. The supported format is an optional minus sign followed by digits optionally followed by a decimal point and more digits.
 func Float() Parser {
-	return Transformer(newFloatNumberString(), func(v interface{}) (interface{}, error) {
+	return Transformer(floatNumberString(), func(v interface{}) (interface{}, error) {
 		val, err := strconv.ParseFloat(v.(string), 64)
 		if err != nil {
 			return nil, floatError{innerError: err}
@@ -427,7 +427,7 @@ type integralStringParser struct {
 	parsers []Parser
 }
 
-func newIntegralString() Parser {
+func integralString() Parser {
 	return &integralStringParser{}
 }
 
@@ -465,14 +465,14 @@ func (i *integralStringParser) Unread(src *Reader) {
 }
 
 func (i *integralStringParser) Clone() Parser {
-	return newIntegralString()
+	return integralString()
 }
 
 type floatNumberStringParser struct {
 	parsers []Parser
 }
 
-func newFloatNumberString() Parser {
+func floatNumberString() Parser {
 	return &floatNumberStringParser{}
 }
 
@@ -517,5 +517,5 @@ func (i *floatNumberStringParser) Unread(src *Reader) {
 }
 
 func (i *floatNumberStringParser) Clone() Parser {
-	return newFloatNumberString()
+	return floatNumberString()
 }
