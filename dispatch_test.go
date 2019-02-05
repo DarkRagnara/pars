@@ -31,19 +31,10 @@ func TestMultiParserMatchingClause(t *testing.T) {
 	assertRunesInSlice(t, val.([]interface{}), "aAa")
 }
 
-func TestRunesToStringTransformingClause(t *testing.T) {
+func TestStringJoiningClause(t *testing.T) {
 	r := stringReader("aAa")
-	val, err := Dispatch(runesToStringTransformingClause{Clause{Char('a'), Char('A'), Char('a')}}).Parse(r)
+	val, err := Dispatch(StringJoiningClause{Clause{Char('a'), Char('A'), Char('a')}}).Parse(r)
 	assertParse(t, val, err, "aAa", nil)
-}
-
-type runesToStringTransformingClause struct {
-	Clause
-}
-
-func (r runesToStringTransformingClause) TransformResult(vals []interface{}) interface{} {
-	val, _ := joinRunesToString(vals)
-	return val
 }
 
 func TestClauseSelection(t *testing.T) {
