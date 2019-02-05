@@ -13,8 +13,9 @@ func TestEmptyDispatchFails(t *testing.T) {
 
 func TestNoMatchingClause(t *testing.T) {
 	r := stringReader("a")
-	val, err := Dispatch(Clause{Char('b')}, Clause{Char('c')}).Parse(r)
-	assertParse(t, val, err, nil, dispatchWithoutMatch{})
+	expectedErr := fmt.Errorf("Last error is passed on")
+	val, err := Dispatch(Clause{Char('b')}, Clause{Char('c')}, Clause{Error(expectedErr)}).Parse(r)
+	assertParse(t, val, err, nil, expectedErr)
 }
 
 func TestSimpleMatchingClause(t *testing.T) {

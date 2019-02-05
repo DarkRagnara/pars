@@ -11,6 +11,7 @@ type dispatchParser struct {
 //The first matching clause is used, later clauses are not tried. Each clause can contain multiple parsers.
 //Clauses are special because they limit the backtracking: If the first parser of a clause matches, that clause
 //is selected even if a later parser of that clause fails.
+//If no clause matches, the error from the last clause is returned.
 //
 //The motivation for limited backtracking is in better error reporting. When an Or parser fails, all you know is that
 //not a single parser succeeded. When a Dispatch parser fails after a clause was selected, you know which subclause
@@ -20,13 +21,16 @@ func Dispatch(clauses ...DispatchClause) Parser {
 }
 
 func (d *dispatchParser) Parse(src *Reader) (interface{}, error) {
+	var err error = dispatchWithoutMatch{}
 	for _, clause := range d.clauses {
 		parsers := clause.Parsers()
 		if len(parsers) == 0 {
 			continue
 		}
 
-		val, selected, err := d.tryParse(src, parsers)
+		var val []interface{}
+		var selected bool
+		val, selected, err = d.tryParse(src, parsers)
 		if selected {
 			if err != nil {
 				return nil, clause.TransformError(err)
@@ -34,7 +38,7 @@ func (d *dispatchParser) Parse(src *Reader) (interface{}, error) {
 			return clause.TransformResult(val), nil
 		}
 	}
-	return nil, dispatchWithoutMatch{}
+	return nil, err
 }
 
 func (d *dispatchParser) tryParse(src *Reader, parsers []Parser) ([]interface{}, bool, error) {
