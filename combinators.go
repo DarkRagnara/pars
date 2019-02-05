@@ -21,9 +21,7 @@ func (s *seqParser) Parse(src *Reader) (interface{}, error) {
 	for i, parser := range s.parsers {
 		val, err := parser.Parse(src)
 		if err != nil {
-			for j := i - 1; j >= 0; j-- {
-				s.parsers[j].Unread(src)
-			}
+			unreadParsers(s.parsers[:i], src)
 			return nil, seqError{index: i, innerError: err}
 		}
 		values[i] = val
@@ -32,9 +30,7 @@ func (s *seqParser) Parse(src *Reader) (interface{}, error) {
 }
 
 func (s *seqParser) Unread(src *Reader) {
-	for i := len(s.parsers) - 1; i >= 0; i-- {
-		s.parsers[i].Unread(src)
-	}
+	unreadParsers(s.parsers, src)
 }
 
 func (s *seqParser) Clone() Parser {
@@ -78,9 +74,7 @@ func (s *someParser) Parse(src *Reader) (interface{}, error) {
 }
 
 func (s *someParser) Unread(src *Reader) {
-	for i := len(s.used) - 1; i >= 0; i-- {
-		s.used[i].Unread(src)
-	}
+	unreadParsers(s.used, src)
 	s.used = nil
 }
 
