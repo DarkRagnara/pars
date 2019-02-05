@@ -367,9 +367,7 @@ func (i *integralStringParser) Parse(src *Reader) (interface{}, error) {
 }
 
 func (i *integralStringParser) Unread(src *Reader) {
-	for j := len(i.parsers) - 1; j >= 0; j-- {
-		i.parsers[j].Unread(src)
-	}
+	unreadParsers(i.parsers, src)
 	i.parsers = nil
 }
 
@@ -419,9 +417,7 @@ func (i *floatNumberStringParser) Parse(src *Reader) (interface{}, error) {
 }
 
 func (i *floatNumberStringParser) Unread(src *Reader) {
-	for j := len(i.parsers) - 1; j >= 0; j-- {
-		i.parsers[j].Unread(src)
-	}
+	unreadParsers(i.parsers, src)
 	i.parsers = nil
 }
 

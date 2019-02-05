@@ -29,3 +29,9 @@ func ParseFromReader(ior io.Reader, p Parser) (interface{}, error) {
 	r := NewReader(ior)
 	return p.Parse(r)
 }
+
+func unreadParsers(parsers []Parser, src *Reader) {
+	for i := len(parsers) - 1; i >= 0; i-- {
+		parsers[i].Unread(src)
+	}
+}

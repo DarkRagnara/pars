@@ -53,9 +53,7 @@ func (d *dispatchParser) tryParse(src *Reader, parsers []Parser) ([]interface{},
 
 		vals[i], err = parser.Parse(src)
 		if err != nil {
-			for j := i - 1; j >= 0; j-- {
-				parsers[j].Unread(src)
-			}
+			unreadParsers(parsers[:i], src)
 			return nil, true, err
 		}
 	}
@@ -65,12 +63,8 @@ func (d *dispatchParser) tryParse(src *Reader, parsers []Parser) ([]interface{},
 }
 
 func (d *dispatchParser) Unread(src *Reader) {
-	if d.parsers != nil {
-		for i := len(d.parsers) - 1; i >= 0; i-- {
-			d.parsers[i].Unread(src)
-		}
-		d.parsers = nil
-	}
+	unreadParsers(d.parsers, src)
+	d.parsers = nil
 }
 
 func (d *dispatchParser) Clone() Parser {
