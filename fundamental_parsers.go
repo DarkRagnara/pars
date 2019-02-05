@@ -250,7 +250,7 @@ func RunesUntil(endCondition Parser) Parser {
 
 //DelimitedString returns a parser that parses a string between two given delimiter strings and returns the value between.
 func DelimitedString(beginDelimiter, endDelimiter string) Parser {
-	return RunesToString(DiscardLeft(String(beginDelimiter), DiscardRight(RunesUntil(String(endDelimiter)), String(endDelimiter))))
+	return JoinString(DiscardLeft(String(beginDelimiter), DiscardRight(RunesUntil(String(endDelimiter)), String(endDelimiter))))
 }
 
 type eof struct{}

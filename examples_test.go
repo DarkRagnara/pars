@@ -64,7 +64,7 @@ func ExampleScanner() {
 	data := "this is a text of words"
 	reader := NewReader(strings.NewReader(data))
 
-	wordParser := SwallowTrailingWhitespace(RunesToString(RunesUntil(CharPred(unicode.IsSpace))))
+	wordParser := SwallowTrailingWhitespace(JoinString(RunesUntil(CharPred(unicode.IsSpace))))
 
 	scanner := NewScanner(reader, wordParser)
 

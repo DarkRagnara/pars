@@ -134,18 +134,34 @@ func SwallowTrailingWhitespace(parser Parser) Parser {
 	return DiscardRight(parser, Some(CharPred(unicode.IsSpace)))
 }
 
-//RunesToString wraps a parser that returns a slice of runes so that it returns a string instead.
-//The returned parser WILL PANIC if the wrapped parser returns something that is not a slice of runes!
+//RunesToString wraps a parser that returns a slice of runes or strings so that it returns a single string instead.
+//Runes and strings can be mixed in the same slice.
+//The returned parser WILL PANIC if the wrapped parser returns something that is not a slice of runes or strings!
+//
+//Deprecated: Use JoinString instead.
 func RunesToString(parser Parser) Parser {
-	return Transformer(parser, joinRunesToString)
+	return JoinString(parser)
 }
 
-func joinRunesToString(val interface{}) (interface{}, error) {
-	runes := val.([]interface{})
+//JoinString wraps a parser that returns a slice of runes or strings so that it returns a single string instead.
+//Runes and strings can be mixed in the same slice.
+//The returned parser WILL PANIC if the wrapped parser returns something that is not a slice of runes or strings!
+func JoinString(parser Parser) Parser {
+	return Transformer(parser, joinToString)
+}
+
+func joinToString(val interface{}) (interface{}, error) {
+	vals := val.([]interface{})
 
 	builder := strings.Builder{}
-	for _, r := range runes {
-		builder.WriteRune(r.(rune))
+	for _, v := range vals {
+		if r, ok := v.(rune); ok {
+			builder.WriteRune(r)
+		} else if s, ok := v.(string); ok {
+			builder.WriteString(s)
+		} else {
+			panic(v)
+		}
 	}
 	return builder.String(), nil
 }

@@ -111,3 +111,16 @@ type DescribeClause struct {
 func (d DescribeClause) TransformError(err error) error {
 	return describeClauseError{description: d.description, innerError: err}
 }
+
+//StringJoiningClause extends a clause that consists of parsers that return runes or strings so that it
+//returnes a single string instead.
+//StringJoiningClause WILL PANIC if any of the parsers return something other than a rune or a string.
+type StringJoiningClause struct {
+	DispatchClause
+}
+
+//TransformResult joins runes and strings together like JoinString.
+func (s StringJoiningClause) TransformResult(vals []interface{}) interface{} {
+	val, _ := joinToString(vals)
+	return val
+}
