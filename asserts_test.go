@@ -6,6 +6,7 @@ import (
 )
 
 func assertRead(t *testing.T, n int, err error, expectedN int, expectedErr error) {
+	t.Helper()
 	if n != expectedN {
 		t.Errorf("Expected read count %v, but got %v", expectedN, n)
 	}
@@ -15,6 +16,7 @@ func assertRead(t *testing.T, n int, err error, expectedN int, expectedErr error
 }
 
 func assertReader(t *testing.T, r *Reader, buf []byte, err error) {
+	t.Helper()
 	if r.lastErr != err {
 		t.Errorf("Expected lastErr in reader %v, but got %v", err, r.lastErr)
 	}
@@ -23,12 +25,14 @@ func assertReader(t *testing.T, r *Reader, buf []byte, err error) {
 }
 
 func assertBufferLen(t *testing.T, buf buffer, expected int) {
+	t.Helper()
 	if buf.Len() != expected {
 		t.Errorf("Expected buffer to have length %v, but got %v", expected, buf.Len())
 	}
 }
 
 func assertBytes(t *testing.T, buf []byte, expectedBuf []byte) {
+	t.Helper()
 	if len(expectedBuf) != len(buf) {
 		t.Errorf("Expected len in reader %v, but got %v, buffer contains %v", len(expectedBuf), len(buf), buf)
 		return
@@ -42,6 +46,7 @@ func assertBytes(t *testing.T, buf []byte, expectedBuf []byte) {
 }
 
 func assertError(t *testing.T, err error, expectedErr error) {
+	t.Helper()
 	if err != expectedErr && (err == nil || expectedErr == nil || err.Error() != expectedErr.Error()) {
 		t.Errorf("\nExpected error '%v' (%T),\n"+
 			"       but got '%v' (%T)", expectedErr, expectedErr, err, err)
@@ -49,12 +54,14 @@ func assertError(t *testing.T, err error, expectedErr error) {
 }
 
 func assertValue(t *testing.T, val interface{}, expectedVal interface{}) {
+	t.Helper()
 	if val != expectedVal {
 		t.Errorf("Expected %v (%T), but got %v (%T)", expectedVal, expectedVal, val, val)
 	}
 }
 
 func assertValueSlice(t *testing.T, val interface{}, expectedValues []interface{}) {
+	t.Helper()
 	var values []interface{}
 	var ok bool
 	if values, ok = val.([]interface{}); ok == false {
@@ -80,6 +87,7 @@ func assertValueSlice(t *testing.T, val interface{}, expectedValues []interface{
 }
 
 func assertValueBigInt(t *testing.T, val interface{}, expectedValStr interface{}) {
+	t.Helper()
 	if expectedValStr == nil {
 		if val != nil {
 			t.Errorf("Expected nil, but got %v (%T)", val, val)
@@ -104,21 +112,25 @@ func assertValueBigInt(t *testing.T, val interface{}, expectedValStr interface{}
 }
 
 func assertParse(t *testing.T, val interface{}, err error, expectedVal interface{}, expectedErr error) {
+	t.Helper()
 	assertValue(t, val, expectedVal)
 	assertError(t, err, expectedErr)
 }
 
 func assertParseSlice(t *testing.T, val interface{}, err error, expectedValues []interface{}, expectedErr error) {
+	t.Helper()
 	assertValueSlice(t, val, expectedValues)
 	assertError(t, err, expectedErr)
 }
 
 func assertParseBigInt(t *testing.T, val interface{}, err error, expectedVal interface{}, expectedErr error) {
+	t.Helper()
 	assertValueBigInt(t, val, expectedVal)
 	assertError(t, err, expectedErr)
 }
 
 func assertRunesInSlice(t *testing.T, vals []interface{}, expected string) {
+	t.Helper()
 	for i, val := range vals {
 		if i >= len(expected) {
 			t.Errorf("More values (%v) found than expected (%v)", len(vals), len(expected))
