@@ -137,6 +137,7 @@ func SwallowTrailingWhitespace(parser Parser) Parser {
 //JoinString wraps a parser that returns a slice of runes or strings so that it returns a single string instead.
 //Runes and strings can be mixed in the same slice. The slice also can contain other slices of runes and strings,
 //recursively.
+//
 //The returned parser WILL PANIC if the wrapped parser returns something that is not a slice of runes or strings!
 func JoinString(parser Parser) Parser {
 	return Transformer(parser, joinToString)
