@@ -76,19 +76,6 @@ func toOperator(v interface{}) (interface{}, error) {
 	return getOperator(v.(rune)), nil
 }
 
-func toCalculation(v interface{}) (interface{}, error) {
-	atoms := v.([]interface{})
-	if len(atoms) != 3 {
-		panic("Exactly three parts expected")
-	}
-
-	a := atoms[0].(Evaler)
-	b := atoms[2].(Evaler)
-	op := atoms[1].(operator)
-
-	return Calculation{a: a, b: b, op: op}, nil
-}
-
 func toNumber(v interface{}) (interface{}, error) {
 	return Number(v.(float64)), nil
 }
