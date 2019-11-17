@@ -418,6 +418,12 @@ func TestParseDelimitedStringMissingEndingDelimiter(t *testing.T) {
 	assertParse(t, val, err, nil, fmt.Errorf("Could not parse expected string \"'\": EOF"))
 }
 
+func TestParseDelimitedStringUnread(t *testing.T) {
+	r := stringReader("'123'")
+	val, err := Or(Seq(DelimitedString("'", "'"), Char('+')), DiscardLeft(Char('\''), DiscardRight(Int(), Char('\'')))).Parse(r)
+	assertParse(t, val, err, 123, nil)
+}
+
 func TestParseFloat(t *testing.T) {
 	r := stringReader("1.23")
 	val, err := Float().Parse(r)

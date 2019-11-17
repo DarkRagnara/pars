@@ -66,6 +66,7 @@ func (s *someParser) Parse(src *Reader) (interface{}, error) {
 
 		nextVal, nextErr := next.Parse(src)
 		if nextErr != nil {
+			s.used = s.used[:len(s.used)-1]
 			break
 		}
 		values = append(values, nextVal)
